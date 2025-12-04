@@ -2,6 +2,7 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -12,6 +13,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ActivityFeed } from '@/components/chat/ActivityFeed';
 import type { RoomWithMembers, User, Activity } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
@@ -49,6 +57,7 @@ export default function RoomLayout({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
   const fetchRoom = async () => {
     try {
@@ -148,8 +157,31 @@ export default function RoomLayout({
             : 'border-slate-800 bg-slate-900/50 backdrop-blur-xl'
         }`}>
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-            {/* Left: Room info */}
-            <div className="flex items-center gap-4">
+            {/* Left: Back + Room info */}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push('/rooms')}
+                className={`h-9 w-9 ${
+                  hg
+                    ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5"
+                >
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </Button>
               <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                 hg
                   ? 'bg-[#e5007d]'
@@ -221,11 +253,14 @@ export default function RoomLayout({
               )}
 
               {/* AI Co-pilot */}
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
-                hg
-                  ? 'bg-emerald-50 border-emerald-200'
-                  : 'bg-emerald-500/10 border-emerald-500/20'
-              }`}>
+              <button
+                onClick={() => setAiDialogOpen(true)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all hover:scale-105 cursor-pointer ${
+                  hg
+                    ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20'
+                }`}
+              >
                 <Avatar className="h-6 w-6">
                   <AvatarFallback
                     style={{ backgroundColor: AI_COPILOT.avatarColor }}
@@ -235,11 +270,44 @@ export default function RoomLayout({
                   </AvatarFallback>
                 </Avatar>
                 <span className={`text-sm ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>AI Co-pilot</span>
-              </div>
+              </button>
             </div>
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
+              {/* Copy invite link - only show if less than 2 members */}
+              {room.members.length < 2 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={
+                    hg
+                      ? 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700'
+                      : 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700/50'
+                  }
+                  onClick={() => {
+                    const inviteLink = `${window.location.origin}/rooms/${roomId}`;
+                    navigator.clipboard.writeText(inviteLink);
+                    toast.success('Invite link copied to clipboard');
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 mr-2"
+                  >
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                  <span className="hidden sm:inline">Invite</span>
+                </Button>
+              )}
+
               {/* Chat toggle (mobile) */}
               <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetTrigger asChild>
@@ -301,11 +369,54 @@ export default function RoomLayout({
                     <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-500'}`}>{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/profile')}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Profile
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/rooms/new')}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="M12 5v14" />
+                    </svg>
                     Create New Room
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-red-500">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" x2="9" y1="12" y2="12" />
+                    </svg>
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -328,6 +439,185 @@ export default function RoomLayout({
             <ActivityFeed roomId={roomId} activities={activities} />
           </aside>
         </div>
+
+        {/* AI Co-pilot Dialog */}
+        <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
+          <DialogContent className={`max-w-2xl ${
+            hg
+              ? 'bg-white border-gray-200'
+              : 'bg-slate-900 border-slate-700'
+          }`}>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-full"
+                  style={{ backgroundColor: AI_COPILOT.avatarColor }}
+                >
+                  <span className="text-white font-semibold text-sm">AI</span>
+                </div>
+                <span className={hg ? 'text-gray-900' : 'text-white'}>
+                  AI Co-pilot
+                </span>
+              </DialogTitle>
+              <DialogDescription className={hg ? 'text-gray-500' : 'text-slate-400'}>
+                Your intelligent assistant for finding the perfect home together
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 mt-4">
+              {/* What is AI Co-pilot */}
+              <div className={`rounded-lg p-4 ${
+                hg ? 'bg-emerald-50' : 'bg-emerald-500/10'
+              }`}>
+                <h3 className={`font-semibold mb-2 flex items-center gap-2 ${
+                  hg ? 'text-emerald-800' : 'text-emerald-400'
+                }`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                  >
+                    <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
+                    <path d="M12 2a10 10 0 0 1 10 10" />
+                    <path d="M12 12l8-4" />
+                  </svg>
+                  What is the AI Co-pilot?
+                </h3>
+                <p className={hg ? 'text-emerald-700' : 'text-emerald-300'}>
+                  The AI Co-pilot is your smart assistant that helps you and your partner find the perfect property. 
+                  It understands natural language, so you can simply describe what you&apos;re looking for instead of filling complex forms.
+                </p>
+              </div>
+
+              {/* How to use it */}
+              <div className={`rounded-lg p-4 ${
+                hg ? 'bg-blue-50' : 'bg-blue-500/10'
+              }`}>
+                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${
+                  hg ? 'text-blue-800' : 'text-blue-400'
+                }`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                  </svg>
+                  How to use it
+                </h3>
+                <ul className={`space-y-2 ${hg ? 'text-blue-700' : 'text-blue-300'}`}>
+                  <li className="flex items-start gap-2">
+                    <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${
+                      hg ? 'bg-blue-100' : 'bg-blue-500/20'
+                    }`}>1</span>
+                    <span>Type <strong>&quot;AI,&quot;</strong> in the chat to ask questions or get advice</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${
+                      hg ? 'bg-blue-100' : 'bg-blue-500/20'
+                    }`}>2</span>
+                    <span>Use <strong>&quot;Ask AI to Build Criteria&quot;</strong> to describe your dream home in plain language</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${
+                      hg ? 'bg-blue-100' : 'bg-blue-500/20'
+                    }`}>3</span>
+                    <span>The AI will analyze both partners&apos; preferences and suggest compromises</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Room Insights */}
+              <div className={`rounded-lg p-4 ${
+                hg ? 'bg-purple-50' : 'bg-purple-500/10'
+              }`}>
+                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${
+                  hg ? 'text-purple-800' : 'text-purple-400'
+                }`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                  >
+                    <path d="M3 3v18h18" />
+                    <path d="m19 9-5 5-4-4-3 3" />
+                  </svg>
+                  Room Insights
+                </h3>
+                <div className={`space-y-2 ${hg ? 'text-purple-700' : 'text-purple-300'}`}>
+                  <div className="flex justify-between items-center">
+                    <span>Members</span>
+                    <span className="font-semibold">{room.members.length} / 2</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Activities</span>
+                    <span className="font-semibold">{activities.length} actions</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Chat messages</span>
+                    <span className="font-semibold">
+                      {activities.filter(a => a.type === 'ChatMessage').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Searches performed</span>
+                    <span className="font-semibold">
+                      {activities.filter(a => a.type === 'SearchExecuted').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>AI interactions</span>
+                    <span className="font-semibold">
+                      {activities.filter(a => a.senderType === 'ai_copilot').length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
+                <p className="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 text-amber-500"
+                  >
+                    <path d="M12 2v8" />
+                    <path d="m4.93 10.93 1.41 1.41" />
+                    <path d="M2 18h2" />
+                    <path d="M20 18h2" />
+                    <path d="m19.07 10.93-1.41 1.41" />
+                    <path d="M22 22H2" />
+                    <path d="m8 22 4-10 4 10" />
+                  </svg>
+                  <span><strong>Pro tip:</strong> The more details you share with the AI, the better it can help match your preferences!</span>
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </RoomContext.Provider>
   );

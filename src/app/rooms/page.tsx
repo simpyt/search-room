@@ -21,8 +21,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { isHomegateTheme } from '@/lib/theme';
-import type { RoomWithMembers, Activity } from '@/lib/types';
+import type { RoomWithMembers, Activity, User } from '@/lib/types';
 import { USERS } from '@/lib/types';
 
 interface RoomWithActivities extends RoomWithMembers {
@@ -40,6 +48,7 @@ export default function RoomsPage() {
   const [deleteRoom, setDeleteRoom] = useState<RoomWithActivities | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -89,6 +98,17 @@ export default function RoomsPage() {
   }, [router]);
 
   useEffect(() => {
+    // Fetch current user
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) {
+          const userData = USERS[data.user.id];
+          setCurrentUser(userData || data.user);
+        }
+      })
+      .catch(() => {});
+
     fetchRooms();
   }, [fetchRooms]);
 
@@ -277,17 +297,110 @@ export default function RoomsPage() {
               </svg>
               New Room
             </Button>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className={
-                hg
-                  ? 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                  : 'border-slate-700 text-slate-300 hover:bg-slate-800'
-              }
-            >
-              Sign out
-            </Button>
+
+            {/* User dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={`flex items-center gap-2 px-2 ${
+                    hg
+                      ? 'hover:bg-gray-100'
+                      : 'hover:bg-slate-800'
+                  }`}
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback
+                      style={{ backgroundColor: currentUser?.avatarColor }}
+                      className="text-white text-sm"
+                    >
+                      {currentUser?.name?.[0] || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className={`hidden sm:inline ${hg ? 'text-gray-700' : 'text-slate-200'}`}>
+                    {currentUser?.name || 'User'}
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`h-4 w-4 ${hg ? 'text-gray-400' : 'text-slate-400'}`}
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className={
+                  hg
+                    ? 'bg-white border-gray-200'
+                    : 'bg-slate-900 border-slate-700'
+                }
+              >
+                <DropdownMenuLabel className={hg ? 'text-gray-900' : 'text-white'}>
+                  <div className="flex flex-col">
+                    <span>{currentUser?.name}</span>
+                    <span className={`text-xs font-normal ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
+                      {currentUser?.email}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className={hg ? 'bg-gray-200' : 'bg-slate-700'} />
+                <DropdownMenuItem
+                  onClick={() => router.push('/profile')}
+                  className={`cursor-pointer ${
+                    hg
+                      ? 'text-gray-700 focus:bg-gray-100 focus:text-gray-900'
+                      : 'text-slate-300 focus:bg-slate-800 focus:text-white'
+                  }`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 mr-2"
+                  >
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className={hg ? 'bg-gray-200' : 'bg-slate-700'} />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className={`cursor-pointer ${
+                    hg
+                      ? 'text-red-600 focus:bg-red-50 focus:text-red-700'
+                      : 'text-red-400 focus:bg-red-500/10 focus:text-red-300'
+                  }`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 mr-2"
+                  >
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" x2="9" y1="12" y2="12" />
+                  </svg>
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
