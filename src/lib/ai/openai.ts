@@ -228,7 +228,7 @@ Respond with a JSON object containing:
   "criteria": { ... structured search criteria ... },
   "weights": { ... field weights ... },
   "context": {
-    "description": "The original description provided",
+    "description": "A cleaned-up, well-written version of the user's input. Fix grammar, improve clarity, and make it professional while preserving all the original meaning and details. Keep it in first person if the user wrote in first person.",
     "familySize": number or null,
     "profession": "string or null",
     "workLocation": "string or null",
