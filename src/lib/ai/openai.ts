@@ -5,6 +5,7 @@ import type {
   UserCriteria,
   CombinedCriteria,
   CompatibilitySnapshot,
+  RoomContext,
 } from '@/lib/types';
 
 // Lazy-load OpenAI client to avoid errors during build
@@ -25,12 +26,28 @@ interface AIContext {
   compatibility: CompatibilitySnapshot | null;
   favoritesCount: number;
   userMessage: string;
+  roomContext?: RoomContext;
 }
 
 export async function generateAIResponse(
   context: AIContext,
   userName: string
 ): Promise<string> {
+  // Build room context section if available
+  let roomContextSection = '';
+  if (context.roomContext) {
+    const rc = context.roomContext;
+    const contextParts: string[] = [];
+    if (rc.description) contextParts.push(`Search description: "${rc.description}"`);
+    if (rc.familySize) contextParts.push(`Family size: ${rc.familySize} people`);
+    if (rc.profession) contextParts.push(`Profession: ${rc.profession}`);
+    if (rc.workLocation) contextParts.push(`Work location: ${rc.workLocation}`);
+    if (rc.preferences?.length) contextParts.push(`Preferences: ${rc.preferences.join(', ')}`);
+    if (contextParts.length > 0) {
+      roomContextSection = `\nSearcher profile:\n${contextParts.join('\n')}`;
+    }
+  }
+
   const systemPrompt = `You are an AI Co-pilot for Search Room, a collaborative property search application. 
 You help two partners (Pierre and Marie) find their perfect home together.
 
@@ -45,9 +62,9 @@ Current context:
 - User asking: ${userName}
 - Number of favorites saved: ${context.favoritesCount}
 ${context.compatibility ? `- Current compatibility: ${context.compatibility.scorePercent}% (${context.compatibility.level})` : '- Compatibility: Not yet calculated'}
-${context.combinedCriteria ? `- Combined criteria set: Yes` : '- Combined criteria: Not yet set'}
+${context.combinedCriteria ? `- Combined criteria set: Yes` : '- Combined criteria: Not yet set'}${roomContextSection}
 
-Keep responses concise and helpful. If asked about specific criteria or compatibility details, provide clear explanations.`;
+Keep responses concise and helpful. If asked about specific criteria or compatibility details, provide clear explanations. Use the searcher profile information to provide more personalized and relevant suggestions.`;
 
   const userCriteriaInfo = Object.entries(context.usersCriteria)
     .map(([userId, crit]) => {
@@ -150,6 +167,101 @@ Respond with a JSON object containing:
   } catch (error) {
     console.error('OpenAI criteria generation error:', error);
     throw new Error('Failed to generate criteria from prompt');
+  }
+}
+
+export type ExtractedContext = Omit<RoomContext, 'updatedAt' | 'updatedByUserId'>;
+
+export async function generateCriteriaAndContextFromDescription(
+  description: string
+): Promise<{
+  criteria: SearchCriteria;
+  weights: CriteriaWeights;
+  context: ExtractedContext;
+  explanation: string;
+}> {
+  const systemPrompt = `You are a helpful assistant that analyzes a natural language description of someone's property search needs. You extract:
+1. Structured search criteria for property search
+2. Profile/context information about the searchers
+
+Available criteria fields:
+- location (string): City or area name
+- radius (number): Search radius in km
+- offerType: "buy" or "rent" (default to "buy" if not specified)
+- category: "apartment", "house", "plot", "parking", "commercial"
+- priceFrom, priceTo (number): Price range in CHF
+- roomsFrom, roomsTo (number): Number of rooms (can be decimal like 3.5)
+- livingSpaceFrom, livingSpaceTo (number): Living space in m²
+- features (array): balcony, terrace, elevator, wheelchair_access, parking, garage, minergie, new_building, old_building, swimming_pool
+
+For weights, use:
+- 1 for "nice to have" / trivial preferences
+- 2 for "nice to have" preferences
+- 3 for "important" preferences  
+- 4 for "very important" preferences
+- 5 for "must have" / essential requirements
+
+Profile/context fields to extract:
+- familySize (number): Number of people in the household
+- profession (string): Job/occupation mentioned
+- workLocation (string): Workplace location if mentioned
+- preferences (array of strings): Lifestyle preferences, hobbies, requirements (e.g., "quiet neighborhood", "near hiking trails", "good schools", "pet-friendly")
+
+Respond with a JSON object containing:
+{
+  "criteria": { ... structured search criteria ... },
+  "weights": { ... field weights ... },
+  "context": {
+    "description": "The original description provided",
+    "familySize": number or null,
+    "profession": "string or null",
+    "workLocation": "string or null",
+    "preferences": ["array", "of", "preferences"]
+  },
+  "explanation": "Brief summary of what was understood and extracted"
+}`;
+
+  try {
+    const response = await getOpenAI().chat.completions.create({
+      model: 'gpt-5-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: description },
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 8000,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('No response from AI');
+    }
+
+    const result = JSON.parse(content);
+
+    // Ensure offerType defaults to 'buy'
+    if (!result.criteria.offerType) {
+      result.criteria.offerType = 'buy';
+    }
+
+    // Build context with original description
+    const context: ExtractedContext = {
+      description,
+      ...(result.context.familySize && { familySize: result.context.familySize }),
+      ...(result.context.profession && { profession: result.context.profession }),
+      ...(result.context.workLocation && { workLocation: result.context.workLocation }),
+      ...(result.context.preferences?.length && { preferences: result.context.preferences }),
+    };
+
+    return {
+      criteria: result.criteria,
+      weights: result.weights || {},
+      context,
+      explanation: result.explanation || 'Information extracted from your description.',
+    };
+  } catch (error) {
+    console.error('OpenAI context extraction error:', error);
+    throw new Error('Failed to extract information from description');
   }
 }
 
