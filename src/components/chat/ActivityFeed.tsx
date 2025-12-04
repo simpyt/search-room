@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,8 +32,15 @@ export function ActivityFeed({ roomId, activities, onAIClick }: ActivityFeedProp
   const [archiveExpanded, setArchiveExpanded] = useState(false);
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(true);
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const hg = isHomegateTheme();
+
+  const scrollToBottom = useCallback(() => {
+    const viewport = scrollAreaRef.current?.querySelector('[data-slot="scroll-area-viewport"]');
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
+  }, []);
 
   // Separate archived vs active activities
   const { archivedActivities, activeActivities } = useMemo(() => {
@@ -55,12 +62,10 @@ export function ActivityFeed({ roomId, activities, onAIClick }: ActivityFeedProp
     return { archivedActivities: archived, activeActivities: active };
   }, [activities, archivedIds]);
 
-  // Auto-scroll to bottom when new activities arrive
+  // Auto-scroll to bottom when new activities arrive or waiting for AI
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [activities]);
+    scrollToBottom();
+  }, [activities, waitingForAI, scrollToBottom]);
 
   const handleArchive = (activityId: string) => {
     setArchivedIds((prev) => new Set([...prev, activityId]));
@@ -88,6 +93,8 @@ export function ActivityFeed({ roomId, activities, onAIClick }: ActivityFeedProp
       }
 
       setMessage('');
+      // Scroll to bottom after sending
+      setTimeout(scrollToBottom, 100);
     } catch {
       toast.error('Failed to send message');
     } finally {
@@ -137,7 +144,7 @@ export function ActivityFeed({ roomId, activities, onAIClick }: ActivityFeedProp
       </div>
 
       {/* Activity list */}
-      <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollAreaRef}>
         <div className="py-4 space-y-4">
           {/* Archived activities section */}
           {archivedActivities.length > 0 && (
