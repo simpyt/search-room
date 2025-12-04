@@ -56,9 +56,15 @@ Collaborative property search POC with AI Co-pilot. Two users (Pierre & Marie) c
    HOMEGATE_API_KEY=your_homegate_key
    ```
 
-5. Create DynamoDB table with:
+5. Create the DynamoDB table:
+   ```bash
+   npm run db:create
+   ```
+   
+   This creates a table with:
    - Partition Key: `PK` (String)
    - Sort Key: `SK` (String)
+   - Billing Mode: Pay-per-request (on-demand)
 
 6. Run the development server:
    ```bash
