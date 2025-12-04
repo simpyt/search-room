@@ -200,6 +200,11 @@ export default function NewRoomPage() {
                   placeholder="e.g., Our Dream Home in Fribourg"
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && roomName.trim()) {
+                      setStep('context');
+                    }
+                  }}
                   className={hg
                     ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
                     : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'

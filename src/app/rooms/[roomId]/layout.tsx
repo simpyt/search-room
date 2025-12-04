@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -264,8 +264,11 @@ export default function RoomLayout({
               </div>
             </div>
 
+            {/* Spacer */}
+            <div className="flex-1" />
+
             {/* Center: Members */}
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2 mr-4">
               {/* Partner (shown first) */}
               {partnerUser && (
                 <>
@@ -451,6 +454,7 @@ export default function RoomLayout({
                     : 'bg-slate-900 border-slate-800'
                 }`}
               >
+                <SheetTitle className="sr-only">Activity Feed</SheetTitle>
                 <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} inSheet />
               </SheetContent>
             </Sheet>
