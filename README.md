@@ -30,22 +30,26 @@ Collaborative property search POC with AI Co-pilot. Two users (Pierre & Marie) c
 ### Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/simpyt/search-room.git
    cd search-room
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Copy the environment variables:
+
    ```bash
    cp .env.example .env.local
    ```
 
 4. Configure `.env.local`:
+
    ```
    AWS_REGION=eu-central-1
    AWS_ACCESS_KEY_ID=your_key
@@ -57,16 +61,18 @@ Collaborative property search POC with AI Co-pilot. Two users (Pierre & Marie) c
    ```
 
 5. Create the DynamoDB table:
+
    ```bash
    npm run db:create
    ```
-   
+
    This creates a table with:
    - Partition Key: `PK` (String)
    - Sort Key: `SK` (String)
    - Billing Mode: Pay-per-request (on-demand)
 
 6. Run the development server:
+
    ```bash
    npm run dev
    ```
