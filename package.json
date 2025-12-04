@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.943.0",
+    "@aws-sdk/credential-providers": "^3.943.0",
     "@aws-sdk/lib-dynamodb": "^3.943.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-avatar": "^1.1.11",
