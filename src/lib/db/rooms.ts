@@ -6,16 +6,25 @@ import {
   TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME, keys, skPrefix } from './client';
-import type { Room, RoomMember, RoomWithMembers } from '@/lib/types';
+import type { Room, RoomMember, RoomWithMembers, RoomContext } from '@/lib/types';
 import { v4 as uuid } from 'uuid';
 
 export async function createRoom(
   name: string,
   createdByUserId: string,
-  searchType: 'buy' | 'rent' = 'buy'
+  searchType: 'buy' | 'rent' = 'buy',
+  initialContext?: Omit<RoomContext, 'updatedAt' | 'updatedByUserId'>
 ): Promise<Room> {
   const roomId = uuid();
   const now = new Date().toISOString();
+
+  const context: RoomContext | undefined = initialContext
+    ? {
+        ...initialContext,
+        updatedAt: now,
+        updatedByUserId: createdByUserId,
+      }
+    : undefined;
 
   const room: Room = {
     roomId,
@@ -23,6 +32,7 @@ export async function createRoom(
     createdByUserId,
     createdAt: now,
     searchType,
+    ...(context && { context }),
   };
 
   const member: RoomMember = {
@@ -197,6 +207,36 @@ export async function updateRoom(
   if (!room) return null;
 
   const updatedRoom = { ...room, ...updates };
+
+  await docClient.send(
+    new PutCommand({
+      TableName: TABLE_NAME,
+      Item: {
+        ...keys.room(roomId),
+        ...updatedRoom,
+        entityType: 'Room',
+      },
+    })
+  );
+
+  return updatedRoom;
+}
+
+export async function updateRoomContext(
+  roomId: string,
+  context: Omit<RoomContext, 'updatedAt' | 'updatedByUserId'>,
+  userId: string
+): Promise<Room | null> {
+  const room = await getRoom(roomId);
+  if (!room) return null;
+
+  const updatedContext: RoomContext = {
+    ...context,
+    updatedAt: new Date().toISOString(),
+    updatedByUserId: userId,
+  };
+
+  const updatedRoom: Room = { ...room, context: updatedContext };
 
   await docClient.send(
     new PutCommand({

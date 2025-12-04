@@ -1,7 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { formatDistanceToNow } from 'date-fns';
 import type { Activity } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
@@ -12,6 +19,7 @@ interface ActivityItemProps {
 }
 
 export function ActivityItem({ activity }: ActivityItemProps) {
+  const [expanded, setExpanded] = useState(false);
   const hg = isHomegateTheme();
 
   const getSenderInfo = () => {
@@ -148,46 +156,90 @@ export function ActivityItem({ activity }: ActivityItemProps) {
 
   const isChat = activity.type === 'ChatMessage';
   const isAI = activity.senderType === 'ai_copilot';
+  const isClickable = isChat && isAI;
 
   return (
-    <div
-      className={`flex gap-3 ${
-        isChat
-          ? isAI
-            ? hg
-              ? 'bg-emerald-50 -mx-4 px-4 py-3 border-l-2 border-emerald-500'
-              : 'bg-emerald-500/5 -mx-4 px-4 py-3 border-l-2 border-emerald-500/50'
-            : ''
-          : 'opacity-75'
-      }`}
-    >
-      <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarFallback
-          style={{ backgroundColor: sender.color }}
-          className="text-xs text-white"
-        >
-          {sender.initial}
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`text-sm font-medium ${
-            isAI
-              ? hg ? 'text-emerald-600' : 'text-emerald-400'
-              : hg ? 'text-gray-900' : 'text-white'
-          }`}>
-            {sender.name}
-          </span>
-          <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>{timeAgo}</span>
-          {!isChat && (
-            <Badge variant="outline" className="text-xs">
-              {activity.type.replace(/([A-Z])/g, ' $1').trim()}
-            </Badge>
-          )}
+    <>
+      <div
+        onClick={isClickable ? () => setExpanded(true) : undefined}
+        className={`flex gap-3 ${
+          isChat
+            ? isAI
+              ? hg
+                ? 'bg-emerald-50 -mx-4 px-4 py-3 border-l-2 border-emerald-500 cursor-pointer hover:bg-emerald-100 transition-colors'
+                : 'bg-emerald-500/5 -mx-4 px-4 py-3 border-l-2 border-emerald-500/50 cursor-pointer hover:bg-emerald-500/10 transition-colors'
+              : ''
+            : 'opacity-75'
+        }`}
+      >
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarFallback
+            style={{ backgroundColor: sender.color }}
+            className="text-xs text-white"
+          >
+            {sender.initial}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-sm font-medium ${
+              isAI
+                ? hg ? 'text-emerald-600' : 'text-emerald-400'
+                : hg ? 'text-gray-900' : 'text-white'
+            }`}>
+              {sender.name}
+            </span>
+            <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>{timeAgo}</span>
+            {!isChat && (
+              <Badge variant="outline" className="text-xs">
+                {activity.type.replace(/([A-Z])/g, ' $1').trim()}
+              </Badge>
+            )}
+            {isClickable && (
+              <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
+                (click to expand)
+              </span>
+            )}
+          </div>
+          {renderContent()}
         </div>
-        {renderContent()}
       </div>
-    </div>
+
+      {/* Full-screen AI response dialog */}
+      {isClickable && (
+        <Dialog open={expanded} onOpenChange={setExpanded}>
+          <DialogContent className={`max-w-3xl max-h-[85vh] overflow-hidden flex flex-col ${
+            hg ? 'bg-white' : 'bg-slate-900 border-slate-700'
+          }`}>
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-full"
+                  style={{ backgroundColor: AI_COPILOT.avatarColor }}
+                >
+                  <span className="text-white font-semibold text-sm">AI</span>
+                </div>
+                <div>
+                  <span className={hg ? 'text-emerald-600' : 'text-emerald-400'}>
+                    AI Co-pilot
+                  </span>
+                  <p className={`text-xs font-normal ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
+                    {timeAgo}
+                  </p>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            <div className={`flex-1 overflow-y-auto pr-2 ${
+              hg ? 'text-gray-700' : 'text-slate-200'
+            }`}>
+              <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap leading-relaxed text-base">
+                {activity.text}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
 

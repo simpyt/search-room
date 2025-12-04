@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth';
 import { createRoom, getUserRooms, getRoom } from '@/lib/db/rooms';
 import { saveUserCriteria, saveCombinedCriteria } from '@/lib/db/criteria';
 import { logRoomCreated } from '@/lib/db/activities';
-import type { SearchCriteria, CriteriaWeights } from '@/lib/types';
+import type { SearchCriteria, CriteriaWeights, RoomContext } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,11 +18,13 @@ export async function POST(request: NextRequest) {
       searchType = 'buy',
       criteria,
       weights,
+      context,
     }: {
       name: string;
       searchType?: 'buy' | 'rent';
       criteria?: SearchCriteria;
       weights?: CriteriaWeights;
+      context?: Omit<RoomContext, 'updatedAt' | 'updatedByUserId'>;
     } = body;
 
     if (!name || name.trim().length === 0) {
@@ -32,8 +34,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the room
-    const room = await createRoom(name.trim(), user.id, searchType);
+    // Create the room with optional context
+    const room = await createRoom(name.trim(), user.id, searchType, context);
 
     // Log room creation
     await logRoomCreated(room.roomId, user.id, room.name);

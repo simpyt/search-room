@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { isUserMemberOfRoom } from '@/lib/db/rooms';
+import { isUserMemberOfRoom, getRoom } from '@/lib/db/rooms';
 import { logChatMessage } from '@/lib/db/activities';
 import { getAllUsersCriteria, getLatestCombinedCriteria } from '@/lib/db/criteria';
 import { getLatestCompatibility } from '@/lib/db/compatibility';
@@ -42,8 +42,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (isAIRequest) {
       // Get context for AI
-      const [usersCriteria, combinedCriteria, compatibility, listings] =
+      const [room, usersCriteria, combinedCriteria, compatibility, listings] =
         await Promise.all([
+          getRoom(roomId),
           getAllUsersCriteria(roomId),
           getLatestCombinedCriteria(roomId),
           getLatestCompatibility(roomId),
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         compatibility,
         favoritesCount: listings.length,
         userMessage: message.replace(/^@?ai[,:]?\s/i, '').trim(),
+        roomContext: room?.context,
       };
 
       // Generate AI response

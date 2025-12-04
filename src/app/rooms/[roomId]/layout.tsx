@@ -17,11 +17,14 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { ActivityFeed } from '@/components/chat/ActivityFeed';
-import type { RoomWithMembers, User, Activity } from '@/lib/types';
+import type { RoomWithMembers, User, Activity, RoomContext } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
 import { isHomegateTheme } from '@/lib/theme';
 
@@ -58,6 +61,9 @@ export default function RoomLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [contextDialogOpen, setContextDialogOpen] = useState(false);
+  const [contextDescription, setContextDescription] = useState('');
+  const [contextSaving, setContextSaving] = useState(false);
 
   const fetchRoom = async () => {
     try {
@@ -120,6 +126,41 @@ export default function RoomLayout({
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
+  };
+
+  const openContextDialog = () => {
+    setContextDescription(room?.context?.description || '');
+    setContextDialogOpen(true);
+  };
+
+  const handleSaveContext = async () => {
+    if (!contextDescription.trim()) {
+      toast.error('Please enter a description');
+      return;
+    }
+
+    setContextSaving(true);
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/context`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: contextDescription, useAI: true }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update context');
+        return;
+      }
+
+      await fetchRoom();
+      toast.success('Search context updated!');
+      setContextDialogOpen(false);
+    } catch {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setContextSaving(false);
+    }
   };
 
   const hg = isHomegateTheme();
@@ -401,6 +442,22 @@ export default function RoomLayout({
                     </svg>
                     Create New Room
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={openContextDialog}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                    Edit Search Context
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-red-500">
                     <svg
@@ -616,6 +673,115 @@ export default function RoomLayout({
                 </p>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Search Context Dialog */}
+        <Dialog open={contextDialogOpen} onOpenChange={setContextDialogOpen}>
+          <DialogContent className={`max-w-2xl ${
+            hg
+              ? 'bg-white border-gray-200'
+              : 'bg-slate-900 border-slate-700'
+          }`}>
+            <DialogHeader>
+              <DialogTitle className={hg ? 'text-gray-900' : 'text-white'}>
+                Edit Search Context
+              </DialogTitle>
+              <DialogDescription className={hg ? 'text-gray-500' : 'text-slate-400'}>
+                Describe your situation to help the AI better understand your needs and provide personalized suggestions.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 mt-4">
+              {/* Current context info if exists */}
+              {room?.context && (
+                <div className={`rounded-lg p-4 ${
+                  hg ? 'bg-blue-50' : 'bg-blue-500/10'
+                }`}>
+                  <h4 className={`text-sm font-medium mb-2 ${
+                    hg ? 'text-blue-800' : 'text-blue-400'
+                  }`}>
+                    Current Profile Data
+                  </h4>
+                  <div className={`text-sm space-y-1 ${
+                    hg ? 'text-blue-700' : 'text-blue-300'
+                  }`}>
+                    {room.context.familySize && (
+                      <p>Family size: {room.context.familySize} people</p>
+                    )}
+                    {room.context.profession && (
+                      <p>Profession: {room.context.profession}</p>
+                    )}
+                    {room.context.workLocation && (
+                      <p>Work location: {room.context.workLocation}</p>
+                    )}
+                    {room.context.preferences && room.context.preferences.length > 0 && (
+                      <p>Preferences: {room.context.preferences.join(', ')}</p>
+                    )}
+                    {!room.context.familySize && !room.context.profession && 
+                     !room.context.workLocation && (!room.context.preferences || room.context.preferences.length === 0) && (
+                      <p className="italic">No structured data extracted yet</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="contextDescription" className={hg ? 'text-gray-700' : 'text-slate-300'}>
+                  Your Situation
+                </Label>
+                <Textarea
+                  id="contextDescription"
+                  placeholder="e.g., We are a family of 4 looking for a quiet place near Fribourg. I work in Bulle and need good public transport access. We enjoy hiking and want outdoor space for the kids."
+                  value={contextDescription}
+                  onChange={(e) => setContextDescription(e.target.value)}
+                  className={`min-h-[150px] resize-none ${
+                    hg
+                      ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                      : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
+                  }`}
+                />
+                <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-500'}`}>
+                  Include details like: family size, work location, commute needs, lifestyle preferences, hobbies, must-haves
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter className="mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setContextDialogOpen(false)}
+                disabled={contextSaving}
+                className={
+                  hg
+                    ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'border-slate-600 text-slate-300 hover:bg-slate-800'
+                }
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveContext}
+                disabled={contextSaving || !contextDescription.trim()}
+                className={
+                  hg
+                    ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+                    : 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700'
+                }
+              >
+                {contextSaving ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Context'
+                )}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
