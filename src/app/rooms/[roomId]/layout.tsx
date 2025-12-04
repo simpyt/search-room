@@ -451,7 +451,7 @@ export default function RoomLayout({
                     : 'bg-slate-900 border-slate-800'
                 }`}
               >
-                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} />
+                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} inSheet />
               </SheetContent>
             </Sheet>
           </div>

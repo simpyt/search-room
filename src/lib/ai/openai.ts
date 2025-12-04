@@ -20,6 +20,11 @@ function getOpenAI(): OpenAI {
   return openaiClient;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface AIContext {
   usersCriteria: Record<string, UserCriteria | null>;
   combinedCriteria: CombinedCriteria | null;
@@ -27,6 +32,7 @@ interface AIContext {
   favoritesCount: number;
   userMessage: string;
   roomContext?: RoomContext;
+  conversationHistory?: ChatMessage[];
 }
 
 export async function generateAIResponse(
@@ -75,15 +81,25 @@ Keep responses concise and helpful. If asked about specific criteria or compatib
     .join('\n');
 
   try {
+    // Build messages array with conversation history
+    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+      { role: 'system', content: systemPrompt },
+    ];
+
+    // Add conversation history (if any)
+    if (context.conversationHistory?.length) {
+      messages.push(...context.conversationHistory);
+    }
+
+    // Add current user message with criteria context
+    messages.push({
+      role: 'user',
+      content: `User criteria summary:\n${userCriteriaInfo}\n\nUser's question: ${context.userMessage}`,
+    });
+
     const response = await getOpenAI().chat.completions.create({
       model: 'gpt-5-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: `User criteria summary:\n${userCriteriaInfo}\n\nUser's question: ${context.userMessage}`,
-        },
-      ],
+      messages,
       max_completion_tokens: 40000,
     });
 

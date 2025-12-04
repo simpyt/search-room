@@ -337,14 +337,8 @@ export default function ListingDetailPage() {
                 return (
                   <Button
                     asChild
-                    className="w-full text-white transition-colors"
-                    style={{ backgroundColor: brandColors.bg }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = brandColors.hover;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = brandColors.bg;
-                    }}
+                    className="w-full text-white transition-colors bg-[var(--brand-bg)] hover:bg-[var(--brand-hover)]"
+                    style={{ '--brand-bg': brandColors.bg, '--brand-hover': brandColors.hover } as React.CSSProperties}
                   >
                     <a
                       href={listing.externalUrl}
