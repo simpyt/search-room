@@ -464,12 +464,12 @@ export default function RoomLayout({
 
         {/* AI Co-pilot Dialog */}
         <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
-          <DialogContent className={`max-w-2xl ${
+          <DialogContent className={`max-w-2xl max-h-[90vh] flex flex-col ${
             hg
               ? 'bg-white border-gray-200'
               : 'bg-slate-900 border-slate-700'
           }`}>
-            <DialogHeader>
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle className="flex items-center gap-3">
                 <div
                   className="flex h-10 w-10 items-center justify-center rounded-full"
@@ -486,7 +486,7 @@ export default function RoomLayout({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 mt-4">
+            <div className="space-y-6 mt-4 overflow-y-auto flex-1 pr-2">
               {/* What is AI Co-pilot */}
               <div className={`rounded-lg p-4 ${
                 hg ? 'bg-emerald-50' : 'bg-emerald-500/10'
