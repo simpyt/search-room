@@ -263,7 +263,7 @@ function buildSearchQuery(criteria: SearchCriteria): SearchQuery {
     for (const feature of criteria.features) {
       const apiParam = FEATURE_TO_API_PARAM[feature];
       if (apiParam) {
-        (query as Record<string, unknown>)[apiParam] = true;
+        (query as unknown as Record<string, unknown>)[apiParam] = true;
       }
     }
   }
@@ -277,7 +277,7 @@ function transformApiResponse(data: ApiSearchResponse, offerType: 'buy' | 'rent'
   const results: HomegateSearchResult[] = data.results.map((item) => {
     const listing = item.listing;
     const primaryLang = (listing.localization?.primary as string) || 'de';
-    const localized = listing.localization?.[primaryLang];
+    const localized = listing.localization?.[primaryLang] as ApiListingLocalization | undefined;
 
     // Get price based on offer type
     let price: number | undefined;
@@ -297,10 +297,18 @@ function transformApiResponse(data: ApiSearchResponse, offerType: 'buy' | 'rent'
     // Get first image
     const imageUrl = localized?.attachments?.find((a) => a.type === 'IMAGE')?.url;
 
+    // Build title - fallback to category + rooms + location if no title
+    const categories = listing.categories?.join(', ') || 'Property';
+    const rooms = listing.characteristics?.numberOfRooms;
+    const locality = listing.address?.locality || 'Unknown';
+    const fallbackTitle = rooms 
+      ? `${rooms} room ${categories.toLowerCase()} in ${locality}`
+      : `${categories} in ${locality}`;
+
     return {
       id: listing.id,
-      title: localized?.text?.title || 'Property',
-      location: listing.address?.locality || 'Unknown',
+      title: localized?.text?.title || fallbackTitle,
+      location: locality,
       address,
       price,
       currency: listing.prices?.currency || 'CHF',
@@ -340,6 +348,8 @@ export async function searchHomegate(
   };
 
   try {
+    console.log('[Homegate] Searching with:', JSON.stringify(requestBody, null, 2));
+    
     const response = await fetch(`${apiUrl}/listings`, {
       method: 'POST',
       headers: {
@@ -351,14 +361,16 @@ export async function searchHomegate(
     });
 
     if (!response.ok) {
-      console.error('Homegate API error:', response.status, await response.text());
+      const errorText = await response.text();
+      console.error('[Homegate] API error:', response.status, errorText);
       return getMockResults(criteria);
     }
 
     const data: ApiSearchResponse = await response.json();
+    console.log('[Homegate] Found', data.total, 'results');
     return transformApiResponse(data, criteria.offerType);
   } catch (error) {
-    console.error('Homegate search error:', error);
+    console.error('[Homegate] Search error:', error);
     return getMockResults(criteria);
   }
 }

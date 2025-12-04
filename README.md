@@ -76,7 +76,7 @@ All AI calls use `response_format: { type: 'json_object' }` for reliable structu
    AWS_SECRET_ACCESS_KEY=your_secret
    DYNAMODB_TABLE_NAME=search-room
    OPENAI_API_KEY=sk-your-key
-   HOMEGATE_API_URL=https://api.homegate.ch
+   HOMEGATE_API_URL=https://apitest.homegate.ch/search
    HOMEGATE_API_KEY=your_homegate_key
    NEXT_PUBLIC_THEME=default  # or "homegate" for brand theme
    ```
