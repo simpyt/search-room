@@ -28,6 +28,7 @@ import {
   USERS,
 } from '@/lib/types';
 import { toast } from 'sonner';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface FavoritesTableProps {
   favorites: Listing[];
@@ -41,6 +42,7 @@ export function FavoritesTable({
   roomId,
 }: FavoritesTableProps) {
   const [updating, setUpdating] = useState<string | null>(null);
+  const hg = isHomegateTheme();
 
   const handleStatusChange = async (listingId: string, newStatus: ListingStatus) => {
     setUpdating(listingId);
@@ -68,7 +70,7 @@ export function FavoritesTable({
 
   if (favorites.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-400">
+      <div className={`text-center py-8 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -91,13 +93,13 @@ export function FavoritesTable({
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="border-slate-700/50 hover:bg-transparent">
-            <TableHead className="text-slate-400">Property</TableHead>
-            <TableHead className="text-slate-400">Price</TableHead>
-            <TableHead className="text-slate-400">Details</TableHead>
-            <TableHead className="text-slate-400">Added by</TableHead>
-            <TableHead className="text-slate-400">Status</TableHead>
-            <TableHead className="text-slate-400 w-[50px]"></TableHead>
+          <TableRow className={`hover:bg-transparent ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
+            <TableHead className={hg ? 'text-gray-500' : 'text-slate-400'}>Property</TableHead>
+            <TableHead className={hg ? 'text-gray-500' : 'text-slate-400'}>Price</TableHead>
+            <TableHead className={hg ? 'text-gray-500' : 'text-slate-400'}>Details</TableHead>
+            <TableHead className={hg ? 'text-gray-500' : 'text-slate-400'}>Added by</TableHead>
+            <TableHead className={hg ? 'text-gray-500' : 'text-slate-400'}>Status</TableHead>
+            <TableHead className={`w-[50px] ${hg ? 'text-gray-500' : 'text-slate-400'}`}></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -107,37 +109,37 @@ export function FavoritesTable({
             return (
               <TableRow
                 key={listing.listingId}
-                className="border-slate-700/50 hover:bg-slate-800/30"
+                className={hg ? 'border-gray-200 hover:bg-gray-50' : 'border-slate-700/50 hover:bg-slate-800/30'}
               >
                 <TableCell>
                   <Link
                     href={`/rooms/${roomId}/listings/${listing.listingId}`}
-                    className="hover:text-sky-400 transition-colors"
+                    className={`transition-colors ${hg ? 'hover:text-[#e5007d]' : 'hover:text-sky-400'}`}
                   >
-                    <div className="font-medium text-white line-clamp-1">
+                    <div className={`font-medium line-clamp-1 ${hg ? 'text-gray-900' : 'text-white'}`}>
                       {listing.title}
                     </div>
-                    <div className="text-sm text-slate-400">{listing.location}</div>
+                    <div className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>{listing.location}</div>
                   </Link>
                 </TableCell>
                 <TableCell>
                   {listing.price ? (
-                    <span className="text-white">
+                    <span className={hg ? 'text-gray-900' : 'text-white'}>
                       CHF {listing.price.toLocaleString()}
                     </span>
                   ) : (
-                    <span className="text-slate-500">-</span>
+                    <span className={hg ? 'text-gray-400' : 'text-slate-500'}>-</span>
                   )}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {listing.rooms && (
-                      <Badge variant="outline" className="border-slate-600 text-xs">
+                      <Badge variant="outline" className={`text-xs ${hg ? 'border-gray-300' : 'border-slate-600'}`}>
                         {listing.rooms} rooms
                       </Badge>
                     )}
                     {listing.livingSpace && (
-                      <Badge variant="outline" className="border-slate-600 text-xs">
+                      <Badge variant="outline" className={`text-xs ${hg ? 'border-gray-300' : 'border-slate-600'}`}>
                         {listing.livingSpace} m²
                       </Badge>
                     )}
@@ -153,7 +155,7 @@ export function FavoritesTable({
                         {addedBy?.name?.[0] || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm text-slate-300">
+                    <span className={`text-sm ${hg ? 'text-gray-700' : 'text-slate-300'}`}>
                       {addedBy?.name || listing.addedByUserId}
                     </span>
                   </div>
@@ -166,7 +168,7 @@ export function FavoritesTable({
                     }
                     disabled={updating === listing.listingId}
                   >
-                    <SelectTrigger className="w-[140px] h-8 text-xs bg-slate-800/50 border-slate-700">
+                    <SelectTrigger className={`w-[140px] h-8 text-xs ${hg ? 'bg-white border-gray-300' : 'bg-slate-800/50 border-slate-700'}`}>
                       <SelectValue>
                         <Badge
                           variant="outline"

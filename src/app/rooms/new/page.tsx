@@ -16,6 +16,7 @@ import {
 import { CriteriaForm } from '@/components/criteria';
 import type { SearchCriteria, CriteriaWeights, RoomContext } from '@/lib/types';
 import { toast } from 'sonner';
+import { isHomegateTheme } from '@/lib/theme';
 
 type Step = 'name' | 'context' | 'criteria';
 
@@ -122,13 +123,25 @@ export default function NewRoomPage() {
     else if (step === 'criteria') setStep('context');
   };
 
+  const hg = isHomegateTheme();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-900/20 via-transparent to-transparent" />
+    <div className={`min-h-screen ${
+      hg
+        ? 'bg-gradient-to-br from-[#ffe6f4] via-white to-[#ffe6f4]'
+        : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
+    }`}>
+      {!hg && (
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-900/20 via-transparent to-transparent" />
+      )}
 
       <div className="relative container max-w-2xl mx-auto py-12 px-4">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 shadow-lg shadow-sky-500/25">
+          <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg ${
+            hg
+              ? 'bg-[#e5007d] shadow-[#e5007d]/25'
+              : 'bg-gradient-to-br from-sky-500 to-indigo-600 shadow-sky-500/25'
+          }`}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -143,8 +156,8 @@ export default function NewRoomPage() {
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white">Create Search Room</h1>
-          <p className="mt-2 text-slate-400">
+          <h1 className={`text-3xl font-bold ${hg ? 'text-gray-900' : 'text-white'}`}>Create Search Room</h1>
+          <p className={`mt-2 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
             Start your collaborative property search
           </p>
           
@@ -155,10 +168,10 @@ export default function NewRoomPage() {
                 key={s}
                 className={`h-2 w-8 rounded-full transition-colors ${
                   step === s
-                    ? 'bg-sky-500'
+                    ? hg ? 'bg-[#e5007d]' : 'bg-sky-500'
                     : ['name', 'context', 'criteria'].indexOf(step) > i
-                    ? 'bg-sky-700'
-                    : 'bg-slate-700'
+                    ? hg ? 'bg-[#e5007d]/50' : 'bg-sky-700'
+                    : hg ? 'bg-gray-300' : 'bg-slate-700'
                 }`}
               />
             ))}
@@ -166,16 +179,20 @@ export default function NewRoomPage() {
         </div>
 
         {step === 'name' && (
-          <Card className="border-slate-700/50 bg-slate-900/80 backdrop-blur-xl shadow-2xl">
+          <Card className={`shadow-2xl ${
+            hg
+              ? 'border-gray-200 bg-white'
+              : 'border-slate-700/50 bg-slate-900/80 backdrop-blur-xl'
+          }`}>
             <CardHeader>
-              <CardTitle className="text-white">Name Your Room</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Name Your Room</CardTitle>
+              <CardDescription className={hg ? 'text-gray-500' : 'text-slate-400'}>
                 Give your search room a memorable name
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="roomName" className="text-slate-300">
+                <Label htmlFor="roomName" className={hg ? 'text-gray-700' : 'text-slate-300'}>
                   Room Name
                 </Label>
                 <Input
@@ -183,7 +200,10 @@ export default function NewRoomPage() {
                   placeholder="e.g., Our Dream Home in Fribourg"
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  className={hg
+                    ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                    : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
+                  }
                   autoFocus
                 />
               </div>
@@ -195,7 +215,11 @@ export default function NewRoomPage() {
                   }
                   setStep('context');
                 }}
-                className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700"
+                className={`w-full ${
+                  hg
+                    ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+                    : 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700'
+                }`}
               >
                 Continue
               </Button>
@@ -204,12 +228,16 @@ export default function NewRoomPage() {
         )}
 
         {step === 'context' && (
-          <Card className="border-slate-700/50 bg-slate-900/80 backdrop-blur-xl shadow-2xl">
+          <Card className={`shadow-2xl ${
+            hg
+              ? 'border-gray-200 bg-white'
+              : 'border-slate-700/50 bg-slate-900/80 backdrop-blur-xl'
+          }`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-white">Tell Us About Your Search</CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Tell Us About Your Search</CardTitle>
+                  <CardDescription className={hg ? 'text-gray-500' : 'text-slate-400'}>
                     Describe your situation in your own words — we&apos;ll use AI to set up your initial criteria
                   </CardDescription>
                 </div>
@@ -217,7 +245,7 @@ export default function NewRoomPage() {
                   variant="ghost"
                   size="sm"
                   onClick={goBack}
-                  className="text-slate-400 hover:text-white"
+                  className={hg ? 'text-gray-500 hover:text-gray-900' : 'text-slate-400 hover:text-white'}
                 >
                   ← Back
                 </Button>
@@ -225,7 +253,7 @@ export default function NewRoomPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="contextDescription" className="text-slate-300">
+                <Label htmlFor="contextDescription" className={hg ? 'text-gray-700' : 'text-slate-300'}>
                   Your Situation
                 </Label>
                 <Textarea
@@ -233,10 +261,14 @@ export default function NewRoomPage() {
                   placeholder={CONTEXT_PLACEHOLDER}
                   value={contextDescription}
                   onChange={(e) => setContextDescription(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 min-h-[150px] resize-none"
+                  className={`min-h-[150px] resize-none ${
+                    hg
+                      ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                      : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
+                  }`}
                   autoFocus
                 />
-                <p className="text-xs text-slate-500">
+                <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-500'}`}>
                   Include details like: family size, work location, commute needs, lifestyle preferences, budget range, must-haves
                 </p>
               </div>
@@ -246,14 +278,22 @@ export default function NewRoomPage() {
                   variant="outline"
                   onClick={() => setStep('criteria')}
                   disabled={aiLoading}
-                  className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white"
+                  className={`flex-1 ${
+                    hg
+                      ? 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      : 'border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
                 >
                   Skip
                 </Button>
                 <Button
                   onClick={handleContextContinue}
                   disabled={aiLoading}
-                  className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700"
+                  className={`flex-1 ${
+                    hg
+                      ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+                      : 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700'
+                  }`}
                 >
                   {aiLoading ? (
                     <>
@@ -273,12 +313,16 @@ export default function NewRoomPage() {
         )}
 
         {step === 'criteria' && (
-          <Card className="border-slate-700/50 bg-slate-900/80 backdrop-blur-xl shadow-2xl">
+          <Card className={`shadow-2xl ${
+            hg
+              ? 'border-gray-200 bg-white'
+              : 'border-slate-700/50 bg-slate-900/80 backdrop-blur-xl'
+          }`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-white">Initial Search Criteria</CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Initial Search Criteria</CardTitle>
+                  <CardDescription className={hg ? 'text-gray-500' : 'text-slate-400'}>
                     {prefilledCriteria
                       ? 'We prefilled these based on your description — adjust as needed'
                       : 'Set your starting preferences (you can adjust later)'}
@@ -288,7 +332,7 @@ export default function NewRoomPage() {
                   variant="ghost"
                   size="sm"
                   onClick={goBack}
-                  className="text-slate-400 hover:text-white"
+                  className={hg ? 'text-gray-500 hover:text-gray-900' : 'text-slate-400 hover:text-white'}
                 >
                   ← Back
                 </Button>

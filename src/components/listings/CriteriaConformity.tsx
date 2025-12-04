@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { Listing, UserCriteria } from '@/lib/types';
 import { USERS } from '@/lib/types';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface CriteriaConformityProps {
   listing: Listing;
@@ -103,7 +104,7 @@ function getMatchIcon(level: MatchLevel) {
       );
     default:
       return (
-        <span className="text-slate-500">
+        <span className="text-gray-400">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -126,10 +127,11 @@ export function CriteriaConformity({
   usersCriteria,
 }: CriteriaConformityProps) {
   const userIds = Object.keys(usersCriteria);
+  const hg = isHomegateTheme();
 
   if (userIds.length === 0) {
     return (
-      <div className="text-center py-4 text-slate-400">
+      <div className={`text-center py-4 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
         No criteria set to compare against.
       </div>
     );
@@ -212,11 +214,11 @@ export function CriteriaConformity({
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-slate-700/50">
-            <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">
+          <tr className={`border-b ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
+            <th className={`px-4 py-3 text-left text-sm font-medium ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
               Criteria
             </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">
+            <th className={`px-4 py-3 text-left text-sm font-medium ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
               Listing Value
             </th>
             {userIds.map((userId) => {
@@ -232,7 +234,7 @@ export function CriteriaConformity({
                         {user?.name?.[0] || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-xs text-slate-400">
+                    <span className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
                       {user?.name || userId}
                     </span>
                   </div>
@@ -243,9 +245,9 @@ export function CriteriaConformity({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.field} className="border-b border-slate-800/50">
-              <td className="px-4 py-3 text-sm text-slate-300">{row.label}</td>
-              <td className="px-4 py-3 text-sm text-white">{row.listingValue}</td>
+            <tr key={row.field} className={`border-b ${hg ? 'border-gray-100' : 'border-slate-800/50'}`}>
+              <td className={`px-4 py-3 text-sm ${hg ? 'text-gray-600' : 'text-slate-300'}`}>{row.label}</td>
+              <td className={`px-4 py-3 text-sm ${hg ? 'text-gray-900' : 'text-white'}`}>{row.listingValue}</td>
               {userIds.map((userId) => {
                 const match = row.userMatches[userId];
                 return (
@@ -267,7 +269,7 @@ export function CriteriaConformity({
       </table>
 
       {/* Legend */}
-      <div className="flex gap-4 mt-4 text-xs text-slate-400">
+      <div className={`flex gap-4 mt-4 text-xs ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
         <div className="flex items-center gap-1">
           {getMatchIcon('match')}
           <span>Match</span>

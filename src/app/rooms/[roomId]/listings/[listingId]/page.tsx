@@ -25,6 +25,7 @@ import {
   USERS,
 } from '@/lib/types';
 import { toast } from 'sonner';
+import { isHomegateTheme } from '@/lib/theme';
 
 export default function ListingDetailPage() {
   const params = useParams();
@@ -96,10 +97,12 @@ export default function ListingDetailPage() {
     }
   };
 
+  const hg = isHomegateTheme();
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${hg ? 'border-[#e5007d]' : 'border-sky-500'}`} />
       </div>
     );
   }
@@ -115,7 +118,9 @@ export default function ListingDetailPage() {
       {/* Back button */}
       <Link
         href={`/rooms/${roomId}`}
-        className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-6"
+        className={`inline-flex items-center gap-2 mb-6 ${
+          hg ? 'text-gray-500 hover:text-gray-900' : 'text-slate-400 hover:text-white'
+        }`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -134,8 +139,8 @@ export default function ListingDetailPage() {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-2">{listing.title}</h1>
-        <div className="flex items-center gap-4 text-slate-400">
+        <h1 className={`text-2xl font-bold mb-2 ${hg ? 'text-gray-900' : 'text-white'}`}>{listing.title}</h1>
+        <div className={`flex items-center gap-4 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
           <span>{listing.location}</span>
           {listing.address && (
             <>
@@ -150,8 +155,8 @@ export default function ListingDetailPage() {
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Image */}
-          <Card className="border-slate-700/50 bg-slate-900/50 overflow-hidden">
-            <div className="aspect-video bg-slate-800 relative">
+          <Card className={`overflow-hidden ${hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'} py-0`}>
+            <div className={`aspect-video relative ${hg ? 'bg-gray-100' : 'bg-slate-800'}`}>
               {listing.imageUrl ? (
                 <Image
                   src={listing.imageUrl}
@@ -171,7 +176,7 @@ export default function ListingDetailPage() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="h-24 w-24 text-slate-600"
+                    className={`h-24 w-24 ${hg ? 'text-gray-300' : 'text-slate-600'}`}
                   >
                     <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                     <polyline points="9 22 9 12 15 12 15 22" />
@@ -182,9 +187,9 @@ export default function ListingDetailPage() {
           </Card>
 
           {/* Status Timeline */}
-          <Card className="border-slate-700/50 bg-slate-900/50">
+          <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
             <CardHeader>
-              <CardTitle className="text-white">Status Journey</CardTitle>
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Status Journey</CardTitle>
             </CardHeader>
             <CardContent>
               <StatusTimeline currentStatus={listing.status} />
@@ -192,9 +197,9 @@ export default function ListingDetailPage() {
           </Card>
 
           {/* Criteria Conformity */}
-          <Card className="border-slate-700/50 bg-slate-900/50">
+          <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
             <CardHeader>
-              <CardTitle className="text-white">Criteria Match</CardTitle>
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Criteria Match</CardTitle>
             </CardHeader>
             <CardContent>
               <CriteriaConformity listing={listing} usersCriteria={usersCriteria} />
@@ -205,15 +210,15 @@ export default function ListingDetailPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Key details */}
-          <Card className="border-slate-700/50 bg-slate-900/50">
+          <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
             <CardHeader>
-              <CardTitle className="text-white">Details</CardTitle>
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {listing.price && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Price</span>
-                  <span className="text-xl font-bold text-white">
+                  <span className={hg ? 'text-gray-500' : 'text-slate-400'}>Price</span>
+                  <span className={`text-xl font-bold ${hg ? 'text-gray-900' : 'text-white'}`}>
                     CHF {listing.price.toLocaleString()}
                   </span>
                 </div>
@@ -221,28 +226,28 @@ export default function ListingDetailPage() {
 
               {listing.rooms && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Rooms</span>
-                  <span className="text-white">{listing.rooms}</span>
+                  <span className={hg ? 'text-gray-500' : 'text-slate-400'}>Rooms</span>
+                  <span className={hg ? 'text-gray-900' : 'text-white'}>{listing.rooms}</span>
                 </div>
               )}
 
               {listing.livingSpace && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Living Space</span>
-                  <span className="text-white">{listing.livingSpace} m²</span>
+                  <span className={hg ? 'text-gray-500' : 'text-slate-400'}>Living Space</span>
+                  <span className={hg ? 'text-gray-900' : 'text-white'}>{listing.livingSpace} m²</span>
                 </div>
               )}
 
               {listing.yearBuilt && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Year Built</span>
-                  <span className="text-white">{listing.yearBuilt}</span>
+                  <span className={hg ? 'text-gray-500' : 'text-slate-400'}>Year Built</span>
+                  <span className={hg ? 'text-gray-900' : 'text-white'}>{listing.yearBuilt}</span>
                 </div>
               )}
 
-              <div className="pt-4 border-t border-slate-700/50">
+              <div className={`pt-4 border-t ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm text-slate-400">Added by</span>
+                  <span className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Added by</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
@@ -253,13 +258,13 @@ export default function ListingDetailPage() {
                       {addedBy?.name?.[0] || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-white">{addedBy?.name || listing.addedByUserId}</span>
+                  <span className={hg ? 'text-gray-900' : 'text-white'}>{addedBy?.name || listing.addedByUserId}</span>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-700/50">
+              <div className={`pt-4 border-t ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm text-slate-400">Seen by</span>
+                  <span className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Seen by</span>
                 </div>
                 <div className="flex gap-1">
                   {listing.seenBy.map((userId) => {
@@ -281,9 +286,9 @@ export default function ListingDetailPage() {
           </Card>
 
           {/* Status change */}
-          <Card className="border-slate-700/50 bg-slate-900/50">
+          <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
             <CardHeader>
-              <CardTitle className="text-white">Update Status</CardTitle>
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Update Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Select
@@ -291,7 +296,7 @@ export default function ListingDetailPage() {
                 onValueChange={(v) => handleStatusChange(v as ListingStatus)}
                 disabled={updating}
               >
-                <SelectTrigger className="bg-slate-800/50 border-slate-700">
+                <SelectTrigger className={hg ? 'bg-white border-gray-300' : 'bg-slate-800/50 border-slate-700'}>
                   <SelectValue>
                     <Badge
                       variant="outline"
@@ -318,12 +323,12 @@ export default function ListingDetailPage() {
           </Card>
 
           {/* Actions */}
-          <Card className="border-slate-700/50 bg-slate-900/50">
+          <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
             <CardContent className="pt-6 space-y-3">
               {listing.externalUrl && (
                 <Button
                   asChild
-                  className="w-full bg-sky-600 hover:bg-sky-700"
+                  className={`w-full ${hg ? 'bg-[#e5007d] hover:bg-[#ae0061]' : 'bg-sky-600 hover:bg-sky-700'}`}
                 >
                   <a
                     href={listing.externalUrl}
@@ -351,7 +356,7 @@ export default function ListingDetailPage() {
 
               <Button
                 variant="outline"
-                className="w-full border-slate-700 hover:bg-slate-800"
+                className={`w-full ${hg ? 'border-gray-300 hover:bg-gray-50' : 'border-slate-700 hover:bg-slate-800'}`}
                 onClick={() => router.push(`/rooms/${roomId}`)}
               >
                 <svg

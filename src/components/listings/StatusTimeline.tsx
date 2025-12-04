@@ -6,6 +6,7 @@ import {
   LISTING_STATUS_LABELS,
   LISTING_STATUS_COLORS,
 } from '@/lib/types';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface StatusTimelineProps {
   currentStatus: ListingStatus;
@@ -23,6 +24,7 @@ const STATUS_ORDER: ListingStatus[] = [
 export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
   const currentIndex = STATUS_ORDER.indexOf(currentStatus);
   const isRejectedOrDeleted = currentStatus === 'REJECTED' || currentStatus === 'DELETED';
+  const hg = isHomegateTheme();
 
   return (
     <div className="relative">
@@ -40,7 +42,7 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                   className={`absolute top-3 right-1/2 w-full h-0.5 ${
                     isPast || isCurrent
                       ? LISTING_STATUS_COLORS[status].replace('bg-', 'bg-opacity-50 ')
-                      : 'bg-slate-700'
+                      : hg ? 'bg-gray-300' : 'bg-slate-700'
                   }`}
                   style={{ transform: 'translateX(-50%)' }}
                 />
@@ -54,7 +56,7 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                       ? LISTING_STATUS_COLORS[status]
                       : isPast
                       ? LISTING_STATUS_COLORS[status] + ' opacity-50'
-                      : 'bg-slate-700'
+                      : hg ? 'bg-gray-300' : 'bg-slate-700'
                   }`}
                 >
                   {isPast ? (
@@ -73,16 +75,16 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                   ) : isCurrent ? (
                     <div className="w-2 h-2 rounded-full bg-white" />
                   ) : (
-                    <div className="w-2 h-2 rounded-full bg-slate-500" />
+                    <div className={`w-2 h-2 rounded-full ${hg ? 'bg-gray-400' : 'bg-slate-500'}`} />
                   )}
                 </div>
                 <span
                   className={`mt-2 text-xs text-center ${
                     isCurrent
-                      ? 'text-white font-medium'
+                      ? hg ? 'text-gray-900 font-medium' : 'text-white font-medium'
                       : isPast
-                      ? 'text-slate-400'
-                      : 'text-slate-500'
+                      ? hg ? 'text-gray-500' : 'text-slate-400'
+                      : hg ? 'text-gray-400' : 'text-slate-500'
                   }`}
                 >
                   {LISTING_STATUS_LABELS[status]}

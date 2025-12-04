@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { CriteriaWeight } from '@/lib/types';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface WeightSelectorProps {
   value?: CriteriaWeight;
@@ -24,6 +25,7 @@ export function WeightSelector({
   size = 'sm',
 }: WeightSelectorProps) {
   const [hovered, setHovered] = useState<number | null>(null);
+  const hg = isHomegateTheme();
 
   const handleClick = (star: number) => {
     if (value === star) {
@@ -59,7 +61,7 @@ export function WeightSelector({
               size === 'sm' ? 'w-4 h-4' : 'w-5 h-5',
               star <= displayValue
                 ? 'text-amber-400 drop-shadow-[0_0_3px_rgba(251,191,36,0.4)]'
-                : 'text-slate-600 hover:text-slate-500'
+                : hg ? 'text-gray-300 hover:text-gray-400' : 'text-slate-600 hover:text-slate-500'
             )}
           >
             <path
