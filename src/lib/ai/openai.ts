@@ -67,11 +67,17 @@ Keep responses concise and helpful. If asked about specific criteria or compatib
           content: `User criteria summary:\n${userCriteriaInfo}\n\nUser's question: ${context.userMessage}`,
         },
       ],
-      max_tokens: 500,
-      temperature: 0.7,
+      max_completion_tokens: 40000,
     });
 
-    return response.choices[0]?.message?.content || 'I apologize, I could not generate a response.';
+    console.log('OpenAI response:', JSON.stringify(response.choices[0], null, 2));
+    
+    const message = response.choices[0]?.message;
+    // Handle potential refusal
+    if (message?.refusal) {
+      return `I'm sorry, I cannot help with that request.`;
+    }
+    return message?.content || 'I apologize, I could not generate a response.';
   } catch (error) {
     console.error('OpenAI API error:', error);
     return 'I apologize, I encountered an error processing your request. Please try again.';
@@ -121,8 +127,7 @@ Respond with a JSON object containing:
         },
       ],
       response_format: { type: 'json_object' },
-      max_tokens: 800,
-      temperature: 0.3,
+      max_completion_tokens: 8000,
     });
 
     const content = response.choices[0]?.message?.content;
@@ -186,8 +191,7 @@ Respond with JSON:
         },
       ],
       response_format: { type: 'json_object' },
-      max_tokens: 400,
-      temperature: 0.3,
+      max_completion_tokens: 4000,
     });
 
     const content = response.choices[0]?.message?.content;
@@ -242,8 +246,7 @@ Respond with JSON:
         },
       ],
       response_format: { type: 'json_object' },
-      max_tokens: 800,
-      temperature: 0.5,
+      max_completion_tokens: 8000,
     });
 
     const content = response.choices[0]?.message?.content;

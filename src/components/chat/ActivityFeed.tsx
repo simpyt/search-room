@@ -9,6 +9,10 @@ import type { Activity } from '@/lib/types';
 import { toast } from 'sonner';
 import { isHomegateTheme } from '@/lib/theme';
 
+const AI_COPILOT = {
+  avatarColor: '#22c55e',
+};
+
 interface ActivityFeedProps {
   roomId: string;
   activities: Activity[];
@@ -17,6 +21,7 @@ interface ActivityFeedProps {
 export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [waitingForAI, setWaitingForAI] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const hg = isHomegateTheme();
 
@@ -30,7 +35,10 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
   const sendMessage = async () => {
     if (!message.trim()) return;
 
+    const isAIMessage = message.trim().toLowerCase().startsWith('ai');
     setSending(true);
+    if (isAIMessage) setWaitingForAI(true);
+    
     try {
       const res = await fetch(`/api/rooms/${roomId}/chat`, {
         method: 'POST',
@@ -49,6 +57,7 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
       toast.error('Failed to send message');
     } finally {
       setSending(false);
+      setWaitingForAI(false);
     }
   };
 
@@ -95,9 +104,34 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
               <p className="text-xs mt-1">Start a conversation or make changes</p>
             </div>
           ) : (
-            sortedActivities.map((activity) => (
-              <ActivityItem key={activity.activityId} activity={activity} />
-            ))
+            <>
+              {sortedActivities.map((activity) => (
+                <ActivityItem key={activity.activityId} activity={activity} />
+              ))}
+              {waitingForAI && (
+                <div className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: AI_COPILOT.avatarColor }}
+                  >
+                    <span className="text-white font-semibold text-xs">AI</span>
+                  </div>
+                  <div className={`flex-1 rounded-lg px-3 py-2 ${
+                    hg ? 'bg-gray-100' : 'bg-slate-800/50'
+                  }`}>
+                    <div className={`text-xs font-medium mb-1 ${hg ? 'text-green-600' : 'text-green-400'}`}>
+                      AI Co-pilot
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`} style={{ animationDelay: '0ms' }} />
+                      <span className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`} style={{ animationDelay: '150ms' }} />
+                      <span className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`} style={{ animationDelay: '300ms' }} />
+                      <span className={`ml-2 text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </ScrollArea>
