@@ -43,6 +43,9 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* =============================================================================
+   DEFAULT THEME (Dark mode)
+   ============================================================================= */
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -110,6 +113,108 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* =============================================================================
+   HOMEGATE THEME (Domus HG styleguide)
+   Based on: https://domus.homegate.ch
+
+   Brand colors:
+   - Primary Magenta: #e5007d
+   - Hover: #ae0061
+   - Active: #8d004f
+   - Text on primary: #ffe6f4
+   - Background light: #fff
+   - Text dark: #1a1a1a
+   - Muted: #767676
+   - Border: #e0e0e0
+   - Link blue: #0060df
+   ============================================================================= */
+.theme-homegate {
+  --radius: 0.5rem;
+
+  /* Background & Foreground */
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+
+  /* Card */
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+
+  /* Popover */
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+
+  /* Primary - Homegate Magenta */
+  --primary: #e5007d;
+  --primary-foreground: #ffffff;
+
+  /* Secondary - Light gray */
+  --secondary: #f5f5f5;
+  --secondary-foreground: #1a1a1a;
+
+  /* Muted */
+  --muted: #f5f5f5;
+  --muted-foreground: #767676;
+
+  /* Accent - Light magenta tint */
+  --accent: #ffe6f4;
+  --accent-foreground: #8d004f;
+
+  /* Destructive */
+  --destructive: #d32f2f;
+
+  /* Border & Input */
+  --border: #e0e0e0;
+  --input: #e0e0e0;
+
+  /* Ring - Primary color for focus */
+  --ring: #e5007d;
+
+  /* Chart colors - Homegate palette */
+  --chart-1: #e5007d;
+  --chart-2: #0060df;
+  --chart-3: #00a676;
+  --chart-4: #ff9500;
+  --chart-5: #8d004f;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #e5007d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffe6f4;
+  --sidebar-accent-foreground: #8d004f;
+  --sidebar-border: #e0e0e0;
+  --sidebar-ring: #e5007d;
+}
+
+/* Homegate-specific component overrides */
+.theme-homegate {
+  /* Font smoothing for cleaner text */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Primary button hover states */
+.theme-homegate .btn-primary:hover,
+.theme-homegate [data-slot="button"]:hover {
+  --primary: #ae0061;
+}
+
+.theme-homegate .btn-primary:active,
+.theme-homegate [data-slot="button"]:active {
+  --primary: #8d004f;
+}
+
+/* Link styling */
+.theme-homegate a:not([class]) {
+  color: #0060df;
+}
+
+.theme-homegate a:not([class]):hover {
+  color: #004bb5;
+  text-decoration: underline;
 }
 
 @layer base {

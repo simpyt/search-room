@@ -15,6 +15,7 @@ import {
 import { ActivityFeed } from '@/components/chat/ActivityFeed';
 import type { RoomWithMembers, User, Activity } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface RoomContextValue {
   room: RoomWithMembers | null;
@@ -112,10 +113,12 @@ export default function RoomLayout({
     router.push('/login');
   };
 
+  const hg = isHomegateTheme();
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+      <div className={`min-h-screen flex items-center justify-center ${hg ? 'bg-white' : 'bg-slate-950'}`}>
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${hg ? 'border-[#e5007d]' : 'border-sky-500'}`} />
       </div>
     );
   }
@@ -137,13 +140,21 @@ export default function RoomLayout({
         refreshActivities: fetchActivities,
       }}
     >
-      <div className="min-h-screen bg-slate-950 flex flex-col">
+      <div className={`min-h-screen flex flex-col ${hg ? 'bg-gray-50' : 'bg-slate-950'}`}>
         {/* Header */}
-        <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-40">
+        <header className={`border-b sticky top-0 z-40 ${
+          hg
+            ? 'border-gray-200 bg-white/95 backdrop-blur-sm'
+            : 'border-slate-800 bg-slate-900/50 backdrop-blur-xl'
+        }`}>
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
             {/* Left: Room info */}
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                hg
+                  ? 'bg-[#e5007d]'
+                  : 'bg-gradient-to-br from-sky-500 to-indigo-600'
+              }`}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -159,8 +170,8 @@ export default function RoomLayout({
                 </svg>
               </div>
               <div>
-                <h1 className="font-semibold text-white">{room.name}</h1>
-                <p className="text-xs text-slate-400">
+                <h1 className={`font-semibold ${hg ? 'text-gray-900' : 'text-white'}`}>{room.name}</h1>
+                <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
                   {room.searchType === 'buy' ? 'Buy' : 'Rent'} •{' '}
                   {room.members.length} member{room.members.length > 1 ? 's' : ''}
                 </p>
@@ -170,7 +181,11 @@ export default function RoomLayout({
             {/* Center: Members */}
             <div className="hidden md:flex items-center gap-2">
               {/* Current user */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 border border-slate-700/50">
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+                hg
+                  ? 'bg-gray-100 border-gray-200'
+                  : 'bg-slate-800/50 border-slate-700/50'
+              }`}>
                 <Avatar className="h-6 w-6">
                   <AvatarFallback
                     style={{ backgroundColor: USERS[user.id]?.avatarColor }}
@@ -179,15 +194,19 @@ export default function RoomLayout({
                     {user.name[0]}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm text-white">{user.name}</span>
-                <span className="text-xs text-slate-500">(you)</span>
+                <span className={`text-sm ${hg ? 'text-gray-900' : 'text-white'}`}>{user.name}</span>
+                <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>(you)</span>
               </div>
 
               {/* Partner */}
               {partnerUser && (
                 <>
-                  <span className="text-slate-500">&</span>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 border border-slate-700/50">
+                  <span className={hg ? 'text-gray-400' : 'text-slate-500'}>&</span>
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+                    hg
+                      ? 'bg-gray-100 border-gray-200'
+                      : 'bg-slate-800/50 border-slate-700/50'
+                  }`}>
                     <Avatar className="h-6 w-6">
                       <AvatarFallback
                         style={{ backgroundColor: partnerUser.avatarColor }}
@@ -196,13 +215,17 @@ export default function RoomLayout({
                         {partnerUser.name[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm text-white">{partnerUser.name}</span>
+                    <span className={`text-sm ${hg ? 'text-gray-900' : 'text-white'}`}>{partnerUser.name}</span>
                   </div>
                 </>
               )}
 
               {/* AI Co-pilot */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+                hg
+                  ? 'bg-emerald-50 border-emerald-200'
+                  : 'bg-emerald-500/10 border-emerald-500/20'
+              }`}>
                 <Avatar className="h-6 w-6">
                   <AvatarFallback
                     style={{ backgroundColor: AI_COPILOT.avatarColor }}
@@ -211,7 +234,7 @@ export default function RoomLayout({
                     AI
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm text-emerald-400">AI Co-pilot</span>
+                <span className={`text-sm ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>AI Co-pilot</span>
               </div>
             </div>
 
@@ -223,7 +246,11 @@ export default function RoomLayout({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="md:hidden border-slate-700 bg-slate-800/50"
+                    className={`md:hidden ${
+                      hg
+                        ? 'border-gray-200 bg-white hover:bg-gray-50'
+                        : 'border-slate-700 bg-slate-800/50'
+                    }`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -241,7 +268,11 @@ export default function RoomLayout({
                 </SheetTrigger>
                 <SheetContent
                   side="right"
-                  className="w-full sm:w-[400px] p-0 bg-slate-900 border-slate-800"
+                  className={`w-full sm:w-[400px] p-0 ${
+                    hg
+                      ? 'bg-white border-gray-200'
+                      : 'bg-slate-900 border-slate-800'
+                  }`}
                 >
                   <ActivityFeed roomId={roomId} activities={activities} />
                 </SheetContent>
@@ -267,14 +298,14 @@ export default function RoomLayout({
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-2 py-1.5">
                     <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-slate-500">{user.email}</p>
+                    <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-500'}`}>{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => router.push('/rooms/new')}>
                     Create New Room
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-400">
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-500">
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -289,7 +320,11 @@ export default function RoomLayout({
           <main className="flex-1 overflow-auto">{children}</main>
 
           {/* Sidebar (desktop) */}
-          <aside className="hidden md:flex w-[400px] border-l border-slate-800 flex-col bg-slate-900/30">
+          <aside className={`hidden md:flex w-[400px] border-l flex-col ${
+            hg
+              ? 'border-gray-200 bg-white'
+              : 'border-slate-800 bg-slate-900/30'
+          }`}>
             <ActivityFeed roomId={roomId} activities={activities} />
           </aside>
         </div>

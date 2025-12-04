@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ActivityItem } from './ActivityItem';
 import type { Activity } from '@/lib/types';
 import { toast } from 'sonner';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface ActivityFeedProps {
   roomId: string;
@@ -17,6 +18,7 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hg = isHomegateTheme();
 
   // Auto-scroll to bottom when new activities arrive
   useEffect(() => {
@@ -43,7 +45,7 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
       }
 
       setMessage('');
-    } catch (error) {
+    } catch {
       toast.error('Failed to send message');
     } finally {
       setSending(false);
@@ -65,9 +67,9 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-slate-800">
-        <h2 className="font-semibold text-white">Activity & Chat</h2>
-        <p className="text-xs text-slate-400">
+      <div className={`px-4 py-3 border-b ${hg ? 'border-gray-200' : 'border-slate-800'}`}>
+        <h2 className={`font-semibold ${hg ? 'text-gray-900' : 'text-white'}`}>Activity & Chat</h2>
+        <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
           {activities.length} activities
         </p>
       </div>
@@ -76,7 +78,7 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
         <div className="py-4 space-y-4">
           {sortedActivities.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
+            <div className={`text-center py-8 ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -101,7 +103,7 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
       </ScrollArea>
 
       {/* Message input */}
-      <div className="p-4 border-t border-slate-800">
+      <div className={`p-4 border-t ${hg ? 'border-gray-200' : 'border-slate-800'}`}>
         <div className="flex gap-2">
           <Input
             placeholder="Type a message or ask AI..."
@@ -109,13 +111,19 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={sending}
-            className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+            className={hg
+              ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+              : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
+            }
           />
           <Button
             onClick={sendMessage}
             disabled={!message.trim() || sending}
             size="icon"
-            className="bg-sky-600 hover:bg-sky-700"
+            className={hg
+              ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+              : 'bg-sky-600 hover:bg-sky-700'
+            }
           >
             {sending ? (
               <svg
@@ -155,7 +163,7 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
             )}
           </Button>
         </div>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className={`text-xs mt-2 ${hg ? 'text-gray-500' : 'text-slate-500'}`}>
           Tip: Start with &quot;AI,&quot; to ask the AI Co-pilot for help
         </p>
       </div>

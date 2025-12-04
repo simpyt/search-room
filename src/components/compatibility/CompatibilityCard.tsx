@@ -8,6 +8,7 @@ import {
   COMPATIBILITY_LEVEL_COLORS,
   COMPATIBILITY_LEVEL_BG,
 } from '@/lib/types';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface CompatibilityCardProps {
   compatibility: CompatibilitySnapshot | null;
@@ -22,15 +23,17 @@ export function CompatibilityCard({
   personalizedFor,
   partnerName,
 }: CompatibilityCardProps) {
+  const hg = isHomegateTheme();
+
   if (!compatibility) {
     return (
-      <Card className="border-slate-700/50 bg-slate-900/50">
+      <Card className={hg ? 'border-gray-200 bg-gray-100' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardContent className="py-6">
           <div className="text-center">
-            <p className="text-slate-400 mb-4">
+            <p className={`mb-4 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
               Compatibility has not been calculated yet
             </p>
-            <Button onClick={onRecalculate} className="bg-sky-600 hover:bg-sky-700">
+            <Button onClick={onRecalculate} className={hg ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white' : 'bg-sky-600 hover:bg-sky-700'}>
               Calculate Compatibility
             </Button>
           </div>
@@ -48,7 +51,7 @@ export function CompatibilityCard({
     <Card className={`border ${levelBg}`}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white">
+          <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>
             {personalizedFor
               ? `Your Compatibility${partnerName ? ` with ${partnerName}` : ''}`
               : 'Compatibility'}
@@ -57,7 +60,7 @@ export function CompatibilityCard({
             variant="ghost"
             size="sm"
             onClick={onRecalculate}
-            className="text-slate-400 hover:text-white"
+            className={hg ? 'text-gray-500 hover:text-gray-900' : 'text-slate-400 hover:text-white'}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -90,7 +93,7 @@ export function CompatibilityCard({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="8"
-                  className="text-slate-700"
+                  className={hg ? 'text-gray-300' : 'text-slate-700'}
                 />
                 {/* Progress arc */}
                 <path
@@ -121,14 +124,18 @@ export function CompatibilityCard({
                 {compatibility.level}
               </Badge>
             </div>
-            <p className="text-sm text-slate-300">{compatibility.comment}</p>
+            <p className={`text-sm ${hg ? 'text-gray-600' : 'text-slate-300'}`}>{compatibility.comment}</p>
           </div>
         </div>
 
         {/* Low compatibility suggestion */}
         {compatibility.level === 'LOW' && (
-          <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <p className="text-sm text-amber-400">
+          <div className={`mt-4 p-3 rounded-lg border ${
+            hg
+              ? 'bg-amber-50 border-amber-200'
+              : 'bg-amber-500/10 border-amber-500/20'
+          }`}>
+            <p className={`text-sm ${hg ? 'text-amber-700' : 'text-amber-400'}`}>
               <strong>Tip:</strong> Ask the AI Co-pilot to suggest a compromise
               by typing &quot;AI, suggest a compromise&quot; in the chat.
             </p>

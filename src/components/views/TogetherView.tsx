@@ -24,6 +24,7 @@ import type {
   CombineMode,
 } from '@/lib/types';
 import { toast } from 'sonner';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface SearchResult {
   id: string;
@@ -204,10 +205,12 @@ export function TogetherView() {
     }
   };
 
+  const hg = isHomegateTheme();
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${hg ? 'border-[#e5007d]' : 'border-sky-500'}`} />
       </div>
     );
   }
@@ -221,40 +224,51 @@ export function TogetherView() {
       />
 
       {/* Criteria Comparison */}
-      <Card className="border-slate-700/50 bg-slate-900/50">
+      <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
-          <CardTitle className="text-white">Search Criteria</CardTitle>
+          <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Search Criteria</CardTitle>
           <CardDescription>Compare and combine your preferences</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <CriteriaDiff usersCriteria={usersCriteria} combinedCriteria={combinedCriteria} />
 
           {/* AI Prompt */}
-          <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-            <h4 className="text-sm font-medium text-emerald-400 mb-2">
+          <div className={`p-4 rounded-lg border ${
+            hg
+              ? 'bg-emerald-50 border-emerald-200'
+              : 'bg-emerald-500/5 border-emerald-500/20'
+          }`}>
+            <h4 className={`text-sm font-medium mb-2 ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>
               AI Assistant
             </h4>
             <Textarea
               placeholder="Describe what you're looking for... e.g., 'We want a 4.5 room apartment near Fribourg, under 1.2M, ideally with a balcony and parking.'"
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 min-h-[80px]"
+              className={hg
+                ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 min-h-[80px]'
+                : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 min-h-[80px]'
+              }
             />
             <Button
               onClick={handleAIBuildCriteria}
               disabled={!aiPrompt.trim() || aiLoading}
-              className="mt-2 bg-emerald-600 hover:bg-emerald-700"
+              className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               {aiLoading ? 'Generating...' : 'Ask AI to Build Criteria'}
             </Button>
           </div>
 
           {/* Search Controls */}
-          <div className="flex items-center gap-4 pt-4 border-t border-slate-700/50">
+          <div className={`flex items-center gap-4 pt-4 border-t ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-400">Combine mode:</span>
+              <span className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Combine mode:</span>
               <Select value={combineMode} onValueChange={(v) => setCombineMode(v as CombineMode)}>
-                <SelectTrigger className="w-[180px] bg-slate-800/50 border-slate-700">
+                <SelectTrigger className={`w-[180px] ${
+                  hg
+                    ? 'bg-white border-gray-300'
+                    : 'bg-slate-800/50 border-slate-700'
+                }`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -267,7 +281,10 @@ export function TogetherView() {
             <Button
               onClick={handleSearch}
               disabled={searching}
-              className="bg-sky-600 hover:bg-sky-700"
+              className={hg
+                ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+                : 'bg-sky-600 hover:bg-sky-700'
+              }
             >
               {searching ? 'Searching...' : 'Search Properties'}
             </Button>
@@ -277,11 +294,11 @@ export function TogetherView() {
 
       {/* Search Results */}
       {results.length > 0 && (
-        <Card className="border-slate-700/50 bg-slate-900/50">
+        <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-white">Search Results</CardTitle>
+                <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Search Results</CardTitle>
                 <CardDescription>{results.length} properties found</CardDescription>
               </div>
             </div>
@@ -297,11 +314,11 @@ export function TogetherView() {
       )}
 
       {/* Favorites */}
-      <Card className="border-slate-700/50 bg-slate-900/50">
+      <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-white">Favorites</CardTitle>
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Favorites</CardTitle>
               <CardDescription>
                 {favorites.length} saved {favorites.length === 1 ? 'property' : 'properties'}
               </CardDescription>

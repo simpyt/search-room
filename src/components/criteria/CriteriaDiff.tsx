@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { UserCriteria, CombinedCriteria, SearchCriteria } from '@/lib/types';
 import { USERS, FEATURE_LABELS, type Feature } from '@/lib/types';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface CriteriaDiffProps {
   usersCriteria: Record<string, UserCriteria | null>;
@@ -86,12 +87,13 @@ function getCriteriaRows(
 }
 
 export function CriteriaDiff({ usersCriteria, combinedCriteria }: CriteriaDiffProps) {
+  const hg = isHomegateTheme();
   const userIds = Object.keys(usersCriteria);
   const rows = getCriteriaRows(usersCriteria, combinedCriteria);
 
   if (userIds.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-400">
+      <div className={`text-center py-8 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
         No criteria set yet. Use the form below or ask AI to generate criteria.
       </div>
     );
@@ -101,8 +103,8 @@ export function CriteriaDiff({ usersCriteria, combinedCriteria }: CriteriaDiffPr
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-slate-700/50">
-            <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">
+          <tr className={`border-b ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
+            <th className={`px-4 py-3 text-left text-sm font-medium ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
               Criteria
             </th>
             {userIds.map((userId) => {
@@ -118,7 +120,7 @@ export function CriteriaDiff({ usersCriteria, combinedCriteria }: CriteriaDiffPr
                         {user?.name?.[0] || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium text-white">
+                    <span className={`text-sm font-medium ${hg ? 'text-gray-900' : 'text-white'}`}>
                       {user?.name || userId}
                     </span>
                   </div>
@@ -126,7 +128,11 @@ export function CriteriaDiff({ usersCriteria, combinedCriteria }: CriteriaDiffPr
               );
             })}
             <th className="px-4 py-3 text-left">
-              <Badge variant="outline" className="bg-sky-500/10 border-sky-500/30 text-sky-400">
+              <Badge variant="outline" className={
+                hg
+                  ? 'bg-[#e5007d]/10 border-[#e5007d]/30 text-[#e5007d]'
+                  : 'bg-sky-500/10 border-sky-500/30 text-sky-400'
+              }>
                 Combined
               </Badge>
             </th>
@@ -136,17 +142,21 @@ export function CriteriaDiff({ usersCriteria, combinedCriteria }: CriteriaDiffPr
           {rows.map((row) => (
             <tr
               key={row.field}
-              className={`border-b border-slate-800/50 ${
-                row.hasDiff ? 'bg-amber-500/5' : ''
+              className={`border-b ${hg ? 'border-gray-100' : 'border-slate-800/50'} ${
+                row.hasDiff ? (hg ? 'bg-amber-50' : 'bg-amber-500/5') : ''
               }`}
             >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-300">{row.label}</span>
+                  <span className={`text-sm ${hg ? 'text-gray-600' : 'text-slate-300'}`}>{row.label}</span>
                   {row.hasDiff && (
                     <Badge
                       variant="outline"
-                      className="text-xs border-amber-500/30 text-amber-400"
+                      className={`text-xs ${
+                        hg
+                          ? 'border-amber-300 text-amber-600'
+                          : 'border-amber-500/30 text-amber-400'
+                      }`}
                     >
                       Differs
                     </Badge>
@@ -154,14 +164,13 @@ export function CriteriaDiff({ usersCriteria, combinedCriteria }: CriteriaDiffPr
                 </div>
               </td>
               {userIds.map((userId) => {
-                const user = USERS[userId];
                 const weight = usersCriteria[userId]?.weights[row.field as keyof SearchCriteria];
                 return (
                   <td key={userId} className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-white">{row.values[userId]}</span>
+                      <span className={`text-sm ${hg ? 'text-gray-900' : 'text-white'}`}>{row.values[userId]}</span>
                       {weight && (
-                        <span className="text-amber-400 text-xs">
+                        <span className={`text-xs ${hg ? 'text-amber-500' : 'text-amber-400'}`}>
                           {'★'.repeat(weight === 5 ? 3 : weight === 3 ? 2 : 1)}
                         </span>
                       )}
@@ -170,7 +179,7 @@ export function CriteriaDiff({ usersCriteria, combinedCriteria }: CriteriaDiffPr
                 );
               })}
               <td className="px-4 py-3">
-                <span className="text-sm text-sky-400">{row.values['combined']}</span>
+                <span className={`text-sm ${hg ? 'text-[#e5007d]' : 'text-sky-400'}`}>{row.values['combined']}</span>
               </td>
             </tr>
           ))}

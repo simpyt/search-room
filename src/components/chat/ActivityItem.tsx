@@ -5,12 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import type { Activity } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface ActivityItemProps {
   activity: Activity;
 }
 
 export function ActivityItem({ activity }: ActivityItemProps) {
+  const hg = isHomegateTheme();
+
   const getSenderInfo = () => {
     if (activity.senderType === 'ai_copilot') {
       return {
@@ -40,56 +43,60 @@ export function ActivityItem({ activity }: ActivityItemProps) {
   });
 
   const renderContent = () => {
+    const textClass = hg ? 'text-gray-600' : 'text-slate-300';
+    const mutedClass = hg ? 'text-gray-500' : 'text-slate-400';
+    const highlightClass = hg ? 'text-gray-900' : 'text-white';
+
     switch (activity.type) {
       case 'ChatMessage':
         return (
-          <p className="text-slate-300 whitespace-pre-wrap">
+          <p className={`${textClass} whitespace-pre-wrap`}>
             {activity.text}
           </p>
         );
 
       case 'RoomCreated':
         return (
-          <p className="text-slate-400 text-sm">
-            Created the room <span className="text-white">{activity.roomName}</span>
+          <p className={`${mutedClass} text-sm`}>
+            Created the room <span className={highlightClass}>{activity.roomName}</span>
           </p>
         );
 
       case 'MemberJoined':
         return (
-          <p className="text-slate-400 text-sm">
-            <span className="text-white">{activity.memberName}</span> joined the room
+          <p className={`${mutedClass} text-sm`}>
+            <span className={highlightClass}>{activity.memberName}</span> joined the room
           </p>
         );
 
       case 'CriteriaUpdated':
         return (
-          <p className="text-slate-400 text-sm">
+          <p className={`${mutedClass} text-sm`}>
             Updated search criteria: {activity.summary}
           </p>
         );
 
       case 'SearchExecuted':
         return (
-          <p className="text-slate-400 text-sm">
+          <p className={`${mutedClass} text-sm`}>
             Searched and found{' '}
-            <span className="text-white">{activity.resultsCount}</span> results
+            <span className={highlightClass}>{activity.resultsCount}</span> results
           </p>
         );
 
       case 'CompatibilityComputed':
         return (
-          <div className="text-slate-400 text-sm">
+          <div className={`${mutedClass} text-sm`}>
             <p>Computed compatibility:</p>
             <div className="flex items-center gap-2 mt-1">
               <Badge
                 variant="outline"
                 className={
                   activity.level === 'HIGH'
-                    ? 'border-green-500 text-green-400'
+                    ? 'border-green-500 text-green-600'
                     : activity.level === 'MEDIUM'
-                    ? 'border-yellow-500 text-yellow-400'
-                    : 'border-red-500 text-red-400'
+                    ? 'border-yellow-500 text-yellow-600'
+                    : 'border-red-500 text-red-600'
                 }
               >
                 {activity.scorePercent}% - {activity.level}
@@ -100,17 +107,17 @@ export function ActivityItem({ activity }: ActivityItemProps) {
 
       case 'ListingPinned':
         return (
-          <p className="text-slate-400 text-sm">
-            Added <span className="text-white">{activity.listingTitle}</span> to
+          <p className={`${mutedClass} text-sm`}>
+            Added <span className={highlightClass}>{activity.listingTitle}</span> to
             favorites
           </p>
         );
 
       case 'ListingStatusChanged':
         return (
-          <p className="text-slate-400 text-sm">
+          <p className={`${mutedClass} text-sm`}>
             Changed status of{' '}
-            <span className="text-white">{activity.listingTitle}</span> from{' '}
+            <span className={highlightClass}>{activity.listingTitle}</span> from{' '}
             <Badge variant="outline" className="text-xs">
               {activity.fromStatus}
             </Badge>{' '}
@@ -123,16 +130,16 @@ export function ActivityItem({ activity }: ActivityItemProps) {
 
       case 'AICriteriaProposed':
         return (
-          <div className="text-slate-400 text-sm">
-            <p className="text-emerald-400">AI proposed new criteria:</p>
+          <div className={`${mutedClass} text-sm`}>
+            <p className={hg ? 'text-emerald-600' : 'text-emerald-400'}>AI proposed new criteria:</p>
             <p className="mt-1">{activity.summary}</p>
           </div>
         );
 
       case 'AICompromiseProposed':
         return (
-          <div className="text-slate-400 text-sm">
-            <p className="text-emerald-400">AI suggested a compromise:</p>
+          <div className={`${mutedClass} text-sm`}>
+            <p className={hg ? 'text-emerald-600' : 'text-emerald-400'}>AI suggested a compromise:</p>
             <p className="mt-1">{activity.summary}</p>
           </div>
         );
@@ -147,7 +154,9 @@ export function ActivityItem({ activity }: ActivityItemProps) {
       className={`flex gap-3 ${
         isChat
           ? isAI
-            ? 'bg-emerald-500/5 -mx-4 px-4 py-3 border-l-2 border-emerald-500/50'
+            ? hg
+              ? 'bg-emerald-50 -mx-4 px-4 py-3 border-l-2 border-emerald-500'
+              : 'bg-emerald-500/5 -mx-4 px-4 py-3 border-l-2 border-emerald-500/50'
             : ''
           : 'opacity-75'
       }`}
@@ -162,10 +171,14 @@ export function ActivityItem({ activity }: ActivityItemProps) {
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className={`text-sm font-medium ${isAI ? 'text-emerald-400' : 'text-white'}`}>
+          <span className={`text-sm font-medium ${
+            isAI
+              ? hg ? 'text-emerald-600' : 'text-emerald-400'
+              : hg ? 'text-gray-900' : 'text-white'
+          }`}>
             {sender.name}
           </span>
-          <span className="text-xs text-slate-500">{timeAgo}</span>
+          <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>{timeAgo}</span>
           {!isChat && (
             <Badge variant="outline" className="text-xs">
               {activity.type.replace(/([A-Z])/g, ' $1').trim()}
