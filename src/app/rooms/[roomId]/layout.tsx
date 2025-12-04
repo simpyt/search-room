@@ -253,28 +253,9 @@ export default function RoomLayout({
 
             {/* Center: Members */}
             <div className="hidden md:flex items-center gap-2">
-              {/* Current user */}
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
-                hg
-                  ? 'bg-gray-100 border-gray-200'
-                  : 'bg-slate-800/50 border-slate-700/50'
-              }`}>
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback
-                    style={{ backgroundColor: USERS[user.id]?.avatarColor }}
-                    className="text-xs text-white"
-                  >
-                    {user.name[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <span className={`text-sm ${hg ? 'text-gray-900' : 'text-white'}`}>{user.name}</span>
-                <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>(you)</span>
-              </div>
-
-              {/* Partner */}
+              {/* Partner (shown first) */}
               {partnerUser && (
                 <>
-                  <span className={hg ? 'text-gray-400' : 'text-slate-500'}>&</span>
                   <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
                     hg
                       ? 'bg-gray-100 border-gray-200'
@@ -290,121 +271,31 @@ export default function RoomLayout({
                     </Avatar>
                     <span className={`text-sm ${hg ? 'text-gray-900' : 'text-white'}`}>{partnerUser.name}</span>
                   </div>
+                  <span className={hg ? 'text-gray-400' : 'text-slate-500'}>&</span>
                 </>
               )}
 
-              {/* AI Co-pilot */}
-              <button
-                onClick={() => setAiDialogOpen(true)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all hover:scale-105 cursor-pointer ${
-                  hg
-                    ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20'
-                }`}
-              >
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback
-                    style={{ backgroundColor: AI_COPILOT.avatarColor }}
-                    className="text-xs text-white"
-                  >
-                    AI
-                  </AvatarFallback>
-                </Avatar>
-                <span className={`text-sm ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>AI Co-pilot</span>
-              </button>
-            </div>
-
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2">
-              {/* Copy invite link - only show if less than 2 members */}
-              {room.members.length < 2 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={
-                    hg
-                      ? 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700'
-                      : 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700/50'
-                  }
-                  onClick={() => {
-                    const inviteLink = `${window.location.origin}/rooms/${roomId}`;
-                    navigator.clipboard.writeText(inviteLink);
-                    toast.success('Invite link copied to clipboard');
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-4 w-4 mr-2"
-                  >
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                  <span className="hidden sm:inline">Invite</span>
-                </Button>
-              )}
-
-              {/* Chat toggle (mobile) */}
-              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className={`md:hidden ${
-                      hg
-                        ? 'border-gray-200 bg-white hover:bg-gray-50'
-                        : 'border-slate-700 bg-slate-800/50'
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-5 w-5"
-                    >
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side="right"
-                  className={`w-full sm:w-[400px] p-0 ${
-                    hg
-                      ? 'bg-white border-gray-200'
-                      : 'bg-slate-900 border-slate-800'
-                  }`}
-                >
-                  <ActivityFeed roomId={roomId} activities={activities} />
-                </SheetContent>
-              </Sheet>
-
-              {/* User menu */}
+              {/* Current user with dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="h-9 w-9 rounded-full p-0"
-                  >
-                    <Avatar className="h-9 w-9">
+                  <button className={`flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                    hg
+                      ? 'bg-gray-100 border-gray-200 hover:bg-gray-200'
+                      : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50'
+                  }`}>
+                    <Avatar className="h-6 w-6">
                       <AvatarFallback
                         style={{ backgroundColor: USERS[user.id]?.avatarColor }}
-                        className="text-white"
+                        className="text-xs text-white"
                       >
                         {user.name[0]}
                       </AvatarFallback>
                     </Avatar>
-                  </Button>
+                    <span className={`text-sm ${hg ? 'text-gray-900' : 'text-white'}`}>{user.name}</span>
+                    <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>(you)</span>
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="center" className="w-48">
                   <div className="px-2 py-1.5">
                     <p className="text-sm font-medium">{user.name}</p>
                     <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-500'}`}>{user.email}</p>
@@ -479,6 +370,80 @@ export default function RoomLayout({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2">
+              {/* Copy invite link - only show if less than 2 members */}
+              {room.members.length < 2 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={
+                    hg
+                      ? 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700'
+                      : 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700/50'
+                  }
+                  onClick={() => {
+                    const inviteLink = `${window.location.origin}/rooms/${roomId}`;
+                    navigator.clipboard.writeText(inviteLink);
+                    toast.success('Invite link copied to clipboard');
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 mr-2"
+                  >
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                  <span className="hidden sm:inline">Invite</span>
+                </Button>
+              )}
+
+              {/* Chat toggle (mobile) */}
+              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={`md:hidden ${
+                      hg
+                        ? 'border-gray-200 bg-white hover:bg-gray-50'
+                        : 'border-slate-700 bg-slate-800/50'
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className={`w-full sm:w-[400px] p-0 ${
+                    hg
+                      ? 'bg-white border-gray-200'
+                      : 'bg-slate-900 border-slate-800'
+                  }`}
+                >
+                  <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} />
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </header>
 
@@ -493,7 +458,7 @@ export default function RoomLayout({
               ? 'border-gray-200 bg-white'
               : 'border-slate-800 bg-slate-900/30'
           }`}>
-            <ActivityFeed roomId={roomId} activities={activities} />
+            <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} />
           </aside>
         </div>
 
