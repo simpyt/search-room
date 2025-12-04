@@ -371,23 +371,50 @@ export default function RoomLayout({
               </DropdownMenu>
             </div>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2">
-              {/* Copy invite link - only show if less than 2 members */}
-              {room.members.length < 2 && (
+            {/* Copy invite link - only show if less than 2 members */}
+            {room.members.length < 2 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={
+                  hg
+                    ? 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700'
+                    : 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700/50'
+                }
+                onClick={() => {
+                  const inviteLink = `${window.location.origin}/rooms/${roomId}`;
+                  navigator.clipboard.writeText(inviteLink);
+                  toast.success('Invite link copied to clipboard');
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4 mr-2"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                <span className="hidden sm:inline">Invite</span>
+              </Button>
+            )}
+
+            {/* Chat toggle (mobile) */}
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger asChild>
                 <Button
                   variant="outline"
-                  size="sm"
-                  className={
+                  size="icon"
+                  className={`md:hidden ${
                     hg
-                      ? 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700'
-                      : 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700/50'
-                  }
-                  onClick={() => {
-                    const inviteLink = `${window.location.origin}/rooms/${roomId}`;
-                    navigator.clipboard.writeText(inviteLink);
-                    toast.success('Invite link copied to clipboard');
-                  }}
+                      ? 'border-gray-200 bg-white hover:bg-gray-50'
+                      : 'border-slate-700 bg-slate-800/50'
+                  }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -397,53 +424,23 @@ export default function RoomLayout({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="h-4 w-4 mr-2"
+                    className="h-5 w-5"
                   >
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
-                  <span className="hidden sm:inline">Invite</span>
                 </Button>
-              )}
-
-              {/* Chat toggle (mobile) */}
-              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className={`md:hidden ${
-                      hg
-                        ? 'border-gray-200 bg-white hover:bg-gray-50'
-                        : 'border-slate-700 bg-slate-800/50'
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-5 w-5"
-                    >
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side="right"
-                  className={`w-full sm:w-[400px] p-0 ${
-                    hg
-                      ? 'bg-white border-gray-200'
-                      : 'bg-slate-900 border-slate-800'
-                  }`}
-                >
-                  <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} />
-                </SheetContent>
-              </Sheet>
-            </div>
+              </SheetTrigger>
+              <SheetContent
+                side="right"
+                className={`w-full sm:w-[400px] p-0 ${
+                  hg
+                    ? 'bg-white border-gray-200'
+                    : 'bg-slate-900 border-slate-800'
+                }`}
+              >
+                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} />
+              </SheetContent>
+            </Sheet>
           </div>
         </header>
 
