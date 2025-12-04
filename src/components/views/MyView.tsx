@@ -5,14 +5,12 @@ import { useRoom } from '@/app/rooms/[roomId]/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CriteriaForm } from '@/components/criteria/CriteriaForm';
-import { CompatibilityCard } from '@/components/compatibility/CompatibilityCard';
 import { ResultsGrid } from '@/components/listings/ResultsGrid';
 import { FavoritesTable } from '@/components/listings/FavoritesTable';
 import type {
   UserCriteria,
   SearchCriteria,
   CriteriaWeights,
-  CompatibilitySnapshot,
   Listing,
 } from '@/lib/types';
 import { USERS } from '@/lib/types';
@@ -33,7 +31,6 @@ interface SearchResult {
 export function MyView() {
   const { room, user, refreshActivities } = useRoom();
   const [myCriteria, setMyCriteria] = useState<UserCriteria | null>(null);
-  const [compatibility, setCompatibility] = useState<CompatibilitySnapshot | null>(null);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,20 +46,14 @@ export function MyView() {
 
     setLoading(true);
     try {
-      const [criteriaRes, compatRes, listingsRes] = await Promise.all([
+      const [criteriaRes, listingsRes] = await Promise.all([
         fetch(`/api/rooms/${roomId}/criteria`),
-        fetch(`/api/rooms/${roomId}/compatibility`),
         fetch(`/api/rooms/${roomId}/listings`),
       ]);
 
       if (criteriaRes.ok) {
         const data = await criteriaRes.json();
         setMyCriteria(data.usersCriteria?.[user.id] || null);
-      }
-
-      if (compatRes.ok) {
-        const data = await compatRes.json();
-        setCompatibility(data.compatibility || null);
       }
 
       if (listingsRes.ok) {
@@ -170,29 +161,6 @@ export function MyView() {
     }
   };
 
-  const handleRecalculateCompatibility = async () => {
-    if (!roomId) return;
-
-    try {
-      const res = await fetch(`/api/rooms/${roomId}/compatibility`, {
-        method: 'POST',
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        toast.error(data.error || 'Failed to calculate compatibility');
-        return;
-      }
-
-      const data = await res.json();
-      setCompatibility(data.compatibility);
-      toast.success('Compatibility recalculated');
-      refreshActivities();
-    } catch (error) {
-      toast.error('Failed to calculate compatibility');
-    }
-  };
-
   // Filter favorites to show who added what
   const myFavorites = favorites.filter((f) => f.addedByUserId === user?.id);
   const partnerFavorites = favorites.filter((f) => f.addedByUserId !== user?.id);
@@ -208,14 +176,6 @@ export function MyView() {
 
   return (
     <div className="space-y-6">
-      {/* Compatibility - personalized view */}
-      <CompatibilityCard
-        compatibility={compatibility}
-        onRecalculate={handleRecalculateCompatibility}
-        personalizedFor={user?.name}
-        partnerName={partnerName || undefined}
-      />
-
       {/* My Criteria */}
       <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
