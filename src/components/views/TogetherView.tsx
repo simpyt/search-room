@@ -16,6 +16,7 @@ import { CriteriaDiff } from '@/components/criteria/CriteriaDiff';
 import { CompatibilityCard } from '@/components/compatibility/CompatibilityCard';
 import { ResultsGrid } from '@/components/listings/ResultsGrid';
 import { FavoritesTable } from '@/components/listings/FavoritesTable';
+import { FavoritesGrid } from '@/components/listings/FavoritesGrid';
 import type {
   UserCriteria,
   CombinedCriteria,
@@ -50,6 +51,7 @@ export function TogetherView() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [criteriaExpanded, setCriteriaExpanded] = useState(false);
+  const [favoritesView, setFavoritesView] = useState<'list' | 'tiles'>('list');
 
   const roomId = room?.roomId;
 
@@ -371,14 +373,72 @@ export function TogetherView() {
                 {favorites.length} saved {favorites.length === 1 ? 'property' : 'properties'}
               </CardDescription>
             </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 ${favoritesView === 'list' ? (hg ? 'bg-gray-100 text-gray-900' : 'bg-slate-700 text-white') : (hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white')}`}
+                onClick={() => setFavoritesView('list')}
+                title="List view"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <line x1="8" x2="21" y1="6" y2="6" />
+                  <line x1="8" x2="21" y1="12" y2="12" />
+                  <line x1="8" x2="21" y1="18" y2="18" />
+                  <line x1="3" x2="3.01" y1="6" y2="6" />
+                  <line x1="3" x2="3.01" y1="12" y2="12" />
+                  <line x1="3" x2="3.01" y1="18" y2="18" />
+                </svg>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 ${favoritesView === 'tiles' ? (hg ? 'bg-gray-100 text-gray-900' : 'bg-slate-700 text-white') : (hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white')}`}
+                onClick={() => setFavoritesView('tiles')}
+                title="Tiles view"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <FavoritesTable
-            favorites={favorites}
-            onStatusChange={fetchData}
-            roomId={roomId!}
-          />
+          {favoritesView === 'list' ? (
+            <FavoritesTable
+              favorites={favorites}
+              onStatusChange={fetchData}
+              roomId={roomId!}
+            />
+          ) : (
+            <FavoritesGrid
+              favorites={favorites}
+              onStatusChange={fetchData}
+              roomId={roomId!}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

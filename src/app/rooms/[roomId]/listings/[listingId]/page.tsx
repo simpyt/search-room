@@ -99,6 +99,27 @@ export default function ListingDetailPage() {
 
   const hg = isHomegateTheme();
 
+  const getBrandColor = (sourceBrand: string | undefined) => {
+    switch (sourceBrand) {
+      case 'homegate':
+        return { bg: '#e5007d', hover: '#ae0061' };
+      case 'immoscout24':
+        return { bg: '#7DAED3', hover: '#5d8db3' };
+      case 'facebook':
+        return { bg: '#1877F2', hover: '#1465d9' };
+      case 'anibis':
+        return { bg: '#0074D9', hover: '#005ba6' };
+      case 'ricardo':
+        return { bg: '#FF4500', hover: '#cc3700' };
+      case 'comparis':
+        return { bg: '#00A651', hover: '#008541' };
+      case 'tutti':
+        return { bg: '#FF6600', hover: '#cc5200' };
+      default:
+        return hg ? { bg: '#e5007d', hover: '#ae0061' } : { bg: '#0ea5e9', hover: '#0284c7' };
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 flex items-center justify-center">
@@ -311,17 +332,26 @@ export default function ListingDetailPage() {
           {/* Actions */}
           <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
             <CardContent className="pt-6 space-y-3">
-              {listing.externalUrl && (
-                <Button
-                  asChild
-                  className={`w-full ${hg ? 'bg-[#e5007d] hover:bg-[#ae0061]' : 'bg-sky-600 hover:bg-sky-700'}`}
-                >
-                  <a
-                    href={listing.externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+              {listing.externalUrl && (() => {
+                const brandColors = getBrandColor(listing.sourceBrand);
+                return (
+                  <Button
+                    asChild
+                    className="w-full text-white transition-colors"
+                    style={{ backgroundColor: brandColors.bg }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = brandColors.hover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = brandColors.bg;
+                    }}
                   >
-                    View on {listing.sourceBrand === 'homegate' ? 'Homegate' : 'Original Site'}
+                    <a
+                      href={listing.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on {listing.sourceBrand === 'homegate' ? 'Homegate' : listing.sourceBrand === 'immoscout24' ? 'Immoscout24' : listing.sourceBrand === 'anibis' ? 'Anibis' : listing.sourceBrand === 'facebook' ? 'Facebook' : listing.sourceBrand === 'ricardo' ? 'Ricardo' : listing.sourceBrand === 'comparis' ? 'Comparis' : listing.sourceBrand === 'tutti' ? 'Tutti' : 'Original Site'}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -338,7 +368,8 @@ export default function ListingDetailPage() {
                     </svg>
                   </a>
                 </Button>
-              )}
+                );
+              })()}
 
               <Button
                 variant="outline"

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { CriteriaForm } from '@/components/criteria/CriteriaForm';
 import { ResultsGrid } from '@/components/listings/ResultsGrid';
 import { FavoritesTable } from '@/components/listings/FavoritesTable';
+import { FavoritesGrid } from '@/components/listings/FavoritesGrid';
 import type {
   UserCriteria,
   SearchCriteria,
@@ -37,6 +38,8 @@ export function MyView() {
   const [saving, setSaving] = useState(false);
   const [searching, setSearching] = useState(false);
   const [criteriaExpanded, setCriteriaExpanded] = useState(false);
+  const [myFavoritesView, setMyFavoritesView] = useState<'list' | 'tiles'>('list');
+  const [partnerFavoritesView, setPartnerFavoritesView] = useState<'list' | 'tiles'>('list');
 
   const roomId = room?.roomId;
   const partnerId = room?.members.find((m) => m.userId !== user?.id)?.userId;
@@ -275,17 +278,79 @@ export function MyView() {
       {/* My Favorites */}
       <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
-          <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Favorites</CardTitle>
-          <CardDescription>
-            {myFavorites.length} {myFavorites.length === 1 ? 'property' : 'properties'} you added
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Favorites</CardTitle>
+              <CardDescription>
+                {myFavorites.length} {myFavorites.length === 1 ? 'property' : 'properties'} you added
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 ${myFavoritesView === 'list' ? (hg ? 'bg-gray-100 text-gray-900' : 'bg-slate-700 text-white') : (hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white')}`}
+                onClick={() => setMyFavoritesView('list')}
+                title="List view"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <line x1="8" x2="21" y1="6" y2="6" />
+                  <line x1="8" x2="21" y1="12" y2="12" />
+                  <line x1="8" x2="21" y1="18" y2="18" />
+                  <line x1="3" x2="3.01" y1="6" y2="6" />
+                  <line x1="3" x2="3.01" y1="12" y2="12" />
+                  <line x1="3" x2="3.01" y1="18" y2="18" />
+                </svg>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 ${myFavoritesView === 'tiles' ? (hg ? 'bg-gray-100 text-gray-900' : 'bg-slate-700 text-white') : (hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white')}`}
+                onClick={() => setMyFavoritesView('tiles')}
+                title="Tiles view"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <FavoritesTable
-            favorites={myFavorites}
-            onStatusChange={fetchData}
-            roomId={roomId!}
-          />
+          {myFavoritesView === 'list' ? (
+            <FavoritesTable
+              favorites={myFavorites}
+              onStatusChange={fetchData}
+              roomId={roomId!}
+            />
+          ) : (
+            <FavoritesGrid
+              favorites={myFavorites}
+              onStatusChange={fetchData}
+              roomId={roomId!}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -293,19 +358,81 @@ export function MyView() {
       {partnerFavorites.length > 0 && (
         <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
           <CardHeader>
-            <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>
-              {partnerName ? `${partnerName}'s Favorites` : "Partner's Favorites"}
-            </CardTitle>
-            <CardDescription>
-              {partnerFavorites.length} {partnerFavorites.length === 1 ? 'property' : 'properties'} added by your partner
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>
+                  {partnerName ? `${partnerName}'s Favorites` : "Partner's Favorites"}
+                </CardTitle>
+                <CardDescription>
+                  {partnerFavorites.length} {partnerFavorites.length === 1 ? 'property' : 'properties'} added by your partner
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-9 w-9 ${partnerFavoritesView === 'list' ? (hg ? 'bg-gray-100 text-gray-900' : 'bg-slate-700 text-white') : (hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white')}`}
+                  onClick={() => setPartnerFavoritesView('list')}
+                  title="List view"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4"
+                  >
+                    <line x1="8" x2="21" y1="6" y2="6" />
+                    <line x1="8" x2="21" y1="12" y2="12" />
+                    <line x1="8" x2="21" y1="18" y2="18" />
+                    <line x1="3" x2="3.01" y1="6" y2="6" />
+                    <line x1="3" x2="3.01" y1="12" y2="12" />
+                    <line x1="3" x2="3.01" y1="18" y2="18" />
+                  </svg>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-9 w-9 ${partnerFavoritesView === 'tiles' ? (hg ? 'bg-gray-100 text-gray-900' : 'bg-slate-700 text-white') : (hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white')}`}
+                  onClick={() => setPartnerFavoritesView('tiles')}
+                  title="Tiles view"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4"
+                  >
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <FavoritesTable
-              favorites={partnerFavorites}
-              onStatusChange={fetchData}
-              roomId={roomId!}
-            />
+            {partnerFavoritesView === 'list' ? (
+              <FavoritesTable
+                favorites={partnerFavorites}
+                onStatusChange={fetchData}
+                roomId={roomId!}
+              />
+            ) : (
+              <FavoritesGrid
+                favorites={partnerFavorites}
+                onStatusChange={fetchData}
+                roomId={roomId!}
+              />
+            )}
           </CardContent>
         </Card>
       )}
