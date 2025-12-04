@@ -1,0 +1,2 @@
+export { CompatibilityCard } from './CompatibilityCard';
+

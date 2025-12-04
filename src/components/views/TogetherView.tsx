@@ -1,0 +1,322 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRoom } from '@/app/rooms/[roomId]/layout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CriteriaDiff } from '@/components/criteria/CriteriaDiff';
+import { CompatibilityCard } from '@/components/compatibility/CompatibilityCard';
+import { ResultsGrid } from '@/components/listings/ResultsGrid';
+import { FavoritesTable } from '@/components/listings/FavoritesTable';
+import type {
+  UserCriteria,
+  CombinedCriteria,
+  CompatibilitySnapshot,
+  Listing,
+  CombineMode,
+} from '@/lib/types';
+import { toast } from 'sonner';
+
+interface SearchResult {
+  id: string;
+  title: string;
+  location: string;
+  price?: number;
+  rooms?: number;
+  livingSpace?: number;
+  imageUrl?: string;
+  externalUrl?: string;
+}
+
+export function TogetherView() {
+  const { room, user, refreshActivities } = useRoom();
+  const [usersCriteria, setUsersCriteria] = useState<Record<string, UserCriteria | null>>({});
+  const [combinedCriteria, setCombinedCriteria] = useState<CombinedCriteria | null>(null);
+  const [compatibility, setCompatibility] = useState<CompatibilitySnapshot | null>(null);
+  const [combineMode, setCombineMode] = useState<CombineMode>('mixed');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [favorites, setFavorites] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const roomId = room?.roomId;
+
+  const fetchData = async () => {
+    if (!roomId) return;
+    
+    setLoading(true);
+    try {
+      const [criteriaRes, compatRes, listingsRes] = await Promise.all([
+        fetch(`/api/rooms/${roomId}/criteria`),
+        fetch(`/api/rooms/${roomId}/compatibility`),
+        fetch(`/api/rooms/${roomId}/listings`),
+      ]);
+
+      if (criteriaRes.ok) {
+        const data = await criteriaRes.json();
+        setUsersCriteria(data.usersCriteria || {});
+        setCombinedCriteria(data.combinedCriteria || null);
+      }
+
+      if (compatRes.ok) {
+        const data = await compatRes.json();
+        setCompatibility(data.compatibility || null);
+      }
+
+      if (listingsRes.ok) {
+        const data = await listingsRes.json();
+        setFavorites(data.listings || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
+
+  const handleSearch = async () => {
+    if (!roomId) return;
+
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ combineMode }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || 'Search failed');
+        return;
+      }
+
+      const data = await res.json();
+      setResults(data.results || []);
+      setCombinedCriteria(data.combinedCriteria || null);
+      toast.success(`Found ${data.results?.length || 0} results`);
+      refreshActivities();
+    } catch (error) {
+      toast.error('Search failed');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleRecalculateCompatibility = async () => {
+    if (!roomId) return;
+
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/compatibility`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to calculate compatibility');
+        return;
+      }
+
+      const data = await res.json();
+      setCompatibility(data.compatibility);
+      toast.success('Compatibility recalculated');
+      refreshActivities();
+    } catch (error) {
+      toast.error('Failed to calculate compatibility');
+    }
+  };
+
+  const handleAIBuildCriteria = async () => {
+    if (!roomId || !aiPrompt.trim()) return;
+
+    setAiLoading(true);
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/criteria/ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: aiPrompt, applyToUser: user?.id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || 'AI failed to generate criteria');
+        return;
+      }
+
+      const data = await res.json();
+      toast.success(data.explanation || 'Criteria generated!');
+      setAiPrompt('');
+      fetchData();
+      refreshActivities();
+    } catch (error) {
+      toast.error('AI failed to generate criteria');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handlePinListing = async (result: SearchResult) => {
+    if (!roomId) return;
+
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/listings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          externalId: result.id,
+          title: result.title,
+          location: result.location,
+          price: result.price,
+          rooms: result.rooms,
+          livingSpace: result.livingSpace,
+          imageUrl: result.imageUrl,
+          externalUrl: result.externalUrl,
+          sourceBrand: 'homegate',
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to pin listing');
+        return;
+      }
+
+      toast.success('Added to favorites');
+      fetchData();
+      refreshActivities();
+    } catch (error) {
+      toast.error('Failed to pin listing');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Compatibility Card */}
+      <CompatibilityCard
+        compatibility={compatibility}
+        onRecalculate={handleRecalculateCompatibility}
+      />
+
+      {/* Criteria Comparison */}
+      <Card className="border-slate-700/50 bg-slate-900/50">
+        <CardHeader>
+          <CardTitle className="text-white">Search Criteria</CardTitle>
+          <CardDescription>Compare and combine your preferences</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <CriteriaDiff usersCriteria={usersCriteria} combinedCriteria={combinedCriteria} />
+
+          {/* AI Prompt */}
+          <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+            <h4 className="text-sm font-medium text-emerald-400 mb-2">
+              AI Assistant
+            </h4>
+            <Textarea
+              placeholder="Describe what you're looking for... e.g., 'We want a 4.5 room apartment near Fribourg, under 1.2M, ideally with a balcony and parking.'"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 min-h-[80px]"
+            />
+            <Button
+              onClick={handleAIBuildCriteria}
+              disabled={!aiPrompt.trim() || aiLoading}
+              className="mt-2 bg-emerald-600 hover:bg-emerald-700"
+            >
+              {aiLoading ? 'Generating...' : 'Ask AI to Build Criteria'}
+            </Button>
+          </div>
+
+          {/* Search Controls */}
+          <div className="flex items-center gap-4 pt-4 border-t border-slate-700/50">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-400">Combine mode:</span>
+              <Select value={combineMode} onValueChange={(v) => setCombineMode(v as CombineMode)}>
+                <SelectTrigger className="w-[180px] bg-slate-800/50 border-slate-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Inclusive (OR)</SelectItem>
+                  <SelectItem value="mixed">Balanced</SelectItem>
+                  <SelectItem value="strict">Strict (AND)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              onClick={handleSearch}
+              disabled={searching}
+              className="bg-sky-600 hover:bg-sky-700"
+            >
+              {searching ? 'Searching...' : 'Search Properties'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Search Results */}
+      {results.length > 0 && (
+        <Card className="border-slate-700/50 bg-slate-900/50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-white">Search Results</CardTitle>
+                <CardDescription>{results.length} properties found</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ResultsGrid
+              results={results}
+              favorites={favorites}
+              onPin={handlePinListing}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Favorites */}
+      <Card className="border-slate-700/50 bg-slate-900/50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-white">Favorites</CardTitle>
+              <CardDescription>
+                {favorites.length} saved {favorites.length === 1 ? 'property' : 'properties'}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <FavoritesTable
+            favorites={favorites}
+            onStatusChange={fetchData}
+            roomId={roomId!}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
