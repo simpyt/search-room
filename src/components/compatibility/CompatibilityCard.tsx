@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { CompatibilitySnapshot } from '@/lib/types';
@@ -8,13 +9,23 @@ import { isHomegateTheme } from '@/lib/theme';
 
 interface CompatibilityCardProps {
   compatibility: CompatibilitySnapshot | null;
-  onRecalculate: () => void;
+  onRecalculate: () => void | Promise<void>;
   personalizedFor?: string;
   partnerName?: string;
 }
 
 export function CompatibilityCard({ compatibility, onRecalculate, personalizedFor, partnerName }: CompatibilityCardProps) {
+  const [refreshing, setRefreshing] = useState(false);
   const hg = isHomegateTheme();
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await onRecalculate();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (!compatibility) {
     return (
@@ -39,10 +50,21 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
             </div>
             <p className={`mb-4 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Compatibility has not been calculated yet</p>
             <Button
-              onClick={onRecalculate}
+              onClick={handleRefresh}
+              disabled={refreshing}
               className={hg ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white' : 'bg-sky-600 hover:bg-sky-700'}
             >
-              Calculate Compatibility
+              {refreshing ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Calculating...
+                </>
+              ) : (
+                'Calculate Compatibility'
+              )}
             </Button>
           </div>
         </CardContent>
@@ -71,9 +93,8 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
   const colors = getGradientColors();
 
   return (
-    <Card className={`overflow-hidden border-0 ${hg ? '' : ''}`}>
-      <div className={`bg-gradient-to-br ${colors.bg} rounded-xl`}>
-        <CardContent className="p-6">
+    <Card className={`overflow-hidden border-0 py-0 bg-gradient-to-br ${colors.bg}`}>
+      <CardContent className="p-6">
           {/* Header */}
           <div className="flex items-start justify-between mb-6">
             <div>
@@ -87,7 +108,8 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
             <Button
               variant="ghost"
               size="sm"
-              onClick={onRecalculate}
+              onClick={handleRefresh}
+              disabled={refreshing}
               className={`gap-1.5 ${hg ? 'text-gray-500 hover:text-gray-900 hover:bg-white/50' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
             >
               <svg
@@ -98,14 +120,14 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-4 w-4"
+                className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
               >
                 <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                 <path d="M3 3v5h5" />
                 <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
                 <path d="M16 16h5v5" />
               </svg>
-              Refresh
+              {refreshing ? 'Refreshing...' : 'Refresh'}
             </Button>
           </div>
 
@@ -228,8 +250,7 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
               </div>
             </div>
           )}
-        </CardContent>
-      </div>
+      </CardContent>
     </Card>
   );
 }
