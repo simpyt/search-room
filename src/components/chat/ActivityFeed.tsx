@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,17 +13,47 @@ const AI_COPILOT = {
   avatarColor: '#22c55e',
 };
 
+const AI_SUGGESTIONS = [
+  { label: 'Advice', prompt: 'AI, give us advice on our search' },
+  { label: 'Analyze', prompt: 'AI, analyze our criteria' },
+  { label: 'Compromises', prompt: 'AI, suggest compromises' },
+];
+
 interface ActivityFeedProps {
   roomId: string;
   activities: Activity[];
+  onAIClick?: () => void;
 }
 
-export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
+export function ActivityFeed({ roomId, activities, onAIClick }: ActivityFeedProps) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [waitingForAI, setWaitingForAI] = useState(false);
+  const [archiveExpanded, setArchiveExpanded] = useState(false);
+  const [suggestionsExpanded, setSuggestionsExpanded] = useState(true);
+  const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const hg = isHomegateTheme();
+
+  // Separate archived vs active activities
+  const { archivedActivities, activeActivities } = useMemo(() => {
+    const sorted = [...activities].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
+    const archived: Activity[] = [];
+    const active: Activity[] = [];
+
+    for (const activity of sorted) {
+      if (archivedIds.has(activity.activityId)) {
+        archived.push(activity);
+      } else {
+        active.push(activity);
+      }
+    }
+
+    return { archivedActivities: archived, activeActivities: active };
+  }, [activities, archivedIds]);
 
   // Auto-scroll to bottom when new activities arrive
   useEffect(() => {
@@ -32,18 +62,23 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
     }
   }, [activities]);
 
-  const sendMessage = async () => {
-    if (!message.trim()) return;
+  const handleArchive = (activityId: string) => {
+    setArchivedIds((prev) => new Set([...prev, activityId]));
+  };
 
-    const isAIMessage = message.trim().toLowerCase().startsWith('ai');
+  const sendMessage = async (msg?: string) => {
+    const messageToSend = msg || message;
+    if (!messageToSend.trim()) return;
+
+    const isAIMessage = messageToSend.trim().toLowerCase().startsWith('ai');
     setSending(true);
     if (isAIMessage) setWaitingForAI(true);
-    
+
     try {
       const res = await fetch(`/api/rooms/${roomId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: message.trim() }),
+        body: JSON.stringify({ message: messageToSend.trim() }),
       });
 
       if (!res.ok) {
@@ -68,25 +103,101 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
     }
   };
 
-  // Sort activities by createdAt (oldest first for display)
-  const sortedActivities = [...activities].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
+  const handleSuggestionClick = (prompt: string) => {
+    setMessage(prompt);
+  };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* Header */}
-      <div className={`px-4 py-3 border-b ${hg ? 'border-gray-200' : 'border-slate-800'}`}>
-        <h2 className={`font-semibold ${hg ? 'text-gray-900' : 'text-white'}`}>Activity & Chat</h2>
-        <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
-          {activities.length} activities
-        </p>
+      <div className={`px-4 py-3 border-b flex-shrink-0 ${hg ? 'border-gray-200' : 'border-slate-800'}`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className={`font-semibold ${hg ? 'text-gray-900' : 'text-white'}`}>Activity & Chat</h2>
+            <p className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-400'}`}>{activities.length} activities</p>
+          </div>
+          {/* AI Co-pilot button */}
+          <button
+            onClick={onAIClick}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all hover:scale-105 cursor-pointer ${
+              hg
+                ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
+                : 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20'
+            }`}
+          >
+            <div
+              className="flex h-6 w-6 items-center justify-center rounded-full"
+              style={{ backgroundColor: AI_COPILOT.avatarColor }}
+            >
+              <span className="text-white font-semibold text-[10px]">AI</span>
+            </div>
+            <span className={`text-sm ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>AI Co-pilot</span>
+          </button>
+        </div>
       </div>
 
       {/* Activity list */}
-      <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollRef}>
         <div className="py-4 space-y-4">
-          {sortedActivities.length === 0 ? (
+          {/* Archived activities section */}
+          {archivedActivities.length > 0 && (
+            <div
+              className={`rounded-lg overflow-hidden ${hg ? 'bg-gray-50 border border-gray-200' : 'bg-slate-800/30 border border-slate-700/50'}`}
+            >
+              <button
+                onClick={() => setArchiveExpanded(!archiveExpanded)}
+                className={`w-full px-3 py-2 flex items-center justify-between text-left transition-colors ${
+                  hg ? 'hover:bg-gray-100' : 'hover:bg-slate-800/50'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`h-4 w-4 ${hg ? 'text-gray-400' : 'text-slate-500'}`}
+                  >
+                    <rect width="20" height="5" x="2" y="3" rx="1" />
+                    <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+                    <path d="M10 12h4" />
+                  </svg>
+                  <span className={`text-sm font-medium ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
+                    Archived ({archivedActivities.length})
+                  </span>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`h-4 w-4 transition-transform ${archiveExpanded ? 'rotate-180' : ''} ${hg ? 'text-gray-400' : 'text-slate-500'}`}
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              {archiveExpanded && (
+                <div className={`px-3 pb-3 space-y-3 border-t ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
+                  <div className="pt-3 space-y-2">
+                    {archivedActivities.map((activity) => (
+                      <div key={activity.activityId} className="opacity-60">
+                        <ActivityItem activity={activity} showArchiveButton={false} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Active activities */}
+          {activeActivities.length === 0 && archivedActivities.length === 0 ? (
             <div className={`text-center py-8 ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -105,8 +216,8 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
             </div>
           ) : (
             <>
-              {sortedActivities.map((activity) => (
-                <ActivityItem key={activity.activityId} activity={activity} />
+              {activeActivities.map((activity) => (
+                <ActivityItem key={activity.activityId} activity={activity} onArchive={handleArchive} />
               ))}
               {waitingForAI && (
                 <div className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -116,16 +227,23 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
                   >
                     <span className="text-white font-semibold text-xs">AI</span>
                   </div>
-                  <div className={`flex-1 rounded-lg px-3 py-2 ${
-                    hg ? 'bg-gray-100' : 'bg-slate-800/50'
-                  }`}>
+                  <div className={`flex-1 rounded-lg px-3 py-2 ${hg ? 'bg-gray-100' : 'bg-slate-800/50'}`}>
                     <div className={`text-xs font-medium mb-1 ${hg ? 'text-green-600' : 'text-green-400'}`}>
                       AI Co-pilot
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`} style={{ animationDelay: '0ms' }} />
-                      <span className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`} style={{ animationDelay: '150ms' }} />
-                      <span className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`} style={{ animationDelay: '300ms' }} />
+                      <span
+                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`}
+                        style={{ animationDelay: '0ms' }}
+                      />
+                      <span
+                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`}
+                        style={{ animationDelay: '150ms' }}
+                      />
+                      <span
+                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`}
+                        style={{ animationDelay: '300ms' }}
+                      />
                       <span className={`ml-2 text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Thinking...</span>
                     </div>
                   </div>
@@ -137,7 +255,50 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
       </ScrollArea>
 
       {/* Message input */}
-      <div className={`p-4 border-t ${hg ? 'border-gray-200' : 'border-slate-800'}`}>
+      <div className={`p-4 border-t flex-shrink-0 ${hg ? 'border-gray-200' : 'border-slate-800'}`}>
+        {/* AI Suggestion chips - collapsible */}
+        <div className="mb-3">
+          <button
+            onClick={() => setSuggestionsExpanded(!suggestionsExpanded)}
+            className={`flex items-center gap-1.5 text-xs mb-2 transition-colors ${
+              hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`h-3 w-3 transition-transform ${suggestionsExpanded ? 'rotate-180' : ''}`}
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+            <span>AI suggestions</span>
+          </button>
+
+          {suggestionsExpanded && (
+            <div className="flex gap-1.5 flex-nowrap overflow-x-auto">
+              {AI_SUGGESTIONS.map((suggestion) => (
+                <button
+                  key={suggestion.label}
+                  onClick={() => handleSuggestionClick(suggestion.prompt)}
+                  disabled={sending}
+                  className={`text-xs px-2 py-1 rounded-full border whitespace-nowrap transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    hg
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                      : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                  }`}
+                >
+                  AI, {suggestion.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-2">
           <Input
             placeholder="Type a message or ask AI..."
@@ -145,40 +306,22 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={sending}
-            className={hg
-              ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
-              : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
+            className={
+              hg
+                ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
             }
           />
           <Button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={!message.trim() || sending}
             size="icon"
-            className={hg
-              ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
-              : 'bg-sky-600 hover:bg-sky-700'
-            }
+            className={hg ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white' : 'bg-sky-600 hover:bg-sky-700'}
           >
             {sending ? (
-              <svg
-                className="animate-spin h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             ) : (
               <svg
@@ -204,4 +347,3 @@ export function ActivityFeed({ roomId, activities }: ActivityFeedProps) {
     </div>
   );
 }
-

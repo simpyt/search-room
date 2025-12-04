@@ -488,7 +488,7 @@ export default function RoomLayout({
           <main className="flex-1 overflow-auto">{children}</main>
 
           {/* Sidebar (desktop) */}
-          <aside className={`hidden md:flex w-[400px] border-l flex-col ${
+          <aside className={`hidden md:flex w-[400px] border-l flex-col h-[calc(100vh-4rem)] sticky top-16 ${
             hg
               ? 'border-gray-200 bg-white'
               : 'border-slate-800 bg-slate-900/30'

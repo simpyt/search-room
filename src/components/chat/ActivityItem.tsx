@@ -16,9 +16,11 @@ import { isHomegateTheme } from '@/lib/theme';
 
 interface ActivityItemProps {
   activity: Activity;
+  onArchive?: (activityId: string) => void;
+  showArchiveButton?: boolean;
 }
 
-export function ActivityItem({ activity }: ActivityItemProps) {
+export function ActivityItem({ activity, onArchive, showArchiveButton = true }: ActivityItemProps) {
   const [expanded, setExpanded] = useState(false);
   const hg = isHomegateTheme();
 
@@ -57,11 +59,7 @@ export function ActivityItem({ activity }: ActivityItemProps) {
 
     switch (activity.type) {
       case 'ChatMessage':
-        return (
-          <p className={`${textClass} whitespace-pre-wrap`}>
-            {activity.text}
-          </p>
-        );
+        return <p className={`${textClass} whitespace-pre-wrap`}>{activity.text}</p>;
 
       case 'RoomCreated':
         return (
@@ -87,8 +85,7 @@ export function ActivityItem({ activity }: ActivityItemProps) {
       case 'SearchExecuted':
         return (
           <p className={`${mutedClass} text-sm`}>
-            Searched and found{' '}
-            <span className={highlightClass}>{activity.resultsCount}</span> results
+            Searched and found <span className={highlightClass}>{activity.resultsCount}</span> results
           </p>
         );
 
@@ -103,8 +100,8 @@ export function ActivityItem({ activity }: ActivityItemProps) {
                   activity.level === 'HIGH'
                     ? 'border-green-500 text-green-600'
                     : activity.level === 'MEDIUM'
-                    ? 'border-yellow-500 text-yellow-600'
-                    : 'border-red-500 text-red-600'
+                      ? 'border-yellow-500 text-yellow-600'
+                      : 'border-red-500 text-red-600'
                 }
               >
                 {activity.scorePercent}% - {activity.level}
@@ -116,16 +113,14 @@ export function ActivityItem({ activity }: ActivityItemProps) {
       case 'ListingPinned':
         return (
           <p className={`${mutedClass} text-sm`}>
-            Added <span className={highlightClass}>{activity.listingTitle}</span> to
-            favorites
+            Added <span className={highlightClass}>{activity.listingTitle}</span> to favorites
           </p>
         );
 
       case 'ListingStatusChanged':
         return (
           <p className={`${mutedClass} text-sm`}>
-            Changed status of{' '}
-            <span className={highlightClass}>{activity.listingTitle}</span> from{' '}
+            Changed status of <span className={highlightClass}>{activity.listingTitle}</span> from{' '}
             <Badge variant="outline" className="text-xs">
               {activity.fromStatus}
             </Badge>{' '}
@@ -158,11 +153,16 @@ export function ActivityItem({ activity }: ActivityItemProps) {
   const isAI = activity.senderType === 'ai_copilot';
   const isClickable = isChat && isAI;
 
+  const handleArchive = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onArchive?.(activity.activityId);
+  };
+
   return (
     <>
       <div
         onClick={isClickable ? () => setExpanded(true) : undefined}
-        className={`flex gap-3 ${
+        className={`flex gap-3 relative group ${
           isChat
             ? isAI
               ? hg
@@ -173,20 +173,17 @@ export function ActivityItem({ activity }: ActivityItemProps) {
         }`}
       >
         <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarFallback
-            style={{ backgroundColor: sender.color }}
-            className="text-xs text-white"
-          >
+          <AvatarFallback style={{ backgroundColor: sender.color }} className="text-xs text-white">
             {sender.initial}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-sm font-medium ${
-              isAI
-                ? hg ? 'text-emerald-600' : 'text-emerald-400'
-                : hg ? 'text-gray-900' : 'text-white'
-            }`}>
+            <span
+              className={`text-sm font-medium ${
+                isAI ? (hg ? 'text-emerald-600' : 'text-emerald-400') : hg ? 'text-gray-900' : 'text-white'
+              }`}
+            >
               {sender.name}
             </span>
             <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>{timeAgo}</span>
@@ -196,21 +193,49 @@ export function ActivityItem({ activity }: ActivityItemProps) {
               </Badge>
             )}
             {isClickable && (
-              <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
-                (click to expand)
-              </span>
+              <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>(click to expand)</span>
             )}
           </div>
           {renderContent()}
         </div>
+
+        {/* Archive button - shown on hover */}
+        {showArchiveButton && onArchive && (
+          <button
+            onClick={handleArchive}
+            className={`absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${
+              hg
+                ? 'bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm'
+                : 'bg-slate-900 hover:bg-slate-700 text-slate-500 hover:text-slate-300 shadow-sm'
+            }`}
+            title="Archive"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+            >
+              <rect width="20" height="5" x="2" y="3" rx="1" />
+              <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+              <path d="M10 12h4" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Full-screen AI response dialog */}
       {isClickable && (
         <Dialog open={expanded} onOpenChange={setExpanded}>
-          <DialogContent className={`max-w-3xl max-h-[85vh] overflow-hidden flex flex-col ${
-            hg ? 'bg-white' : 'bg-slate-900 border-slate-700'
-          }`}>
+          <DialogContent
+            className={`max-w-3xl max-h-[85vh] overflow-hidden flex flex-col ${
+              hg ? 'bg-white' : 'bg-slate-900 border-slate-700'
+            }`}
+          >
             <DialogHeader className="flex-shrink-0">
               <DialogTitle className="flex items-center gap-3">
                 <div
@@ -220,18 +245,12 @@ export function ActivityItem({ activity }: ActivityItemProps) {
                   <span className="text-white font-semibold text-sm">AI</span>
                 </div>
                 <div>
-                  <span className={hg ? 'text-emerald-600' : 'text-emerald-400'}>
-                    AI Co-pilot
-                  </span>
-                  <p className={`text-xs font-normal ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
-                    {timeAgo}
-                  </p>
+                  <span className={hg ? 'text-emerald-600' : 'text-emerald-400'}>AI Co-pilot</span>
+                  <p className={`text-xs font-normal ${hg ? 'text-gray-400' : 'text-slate-500'}`}>{timeAgo}</p>
                 </div>
               </DialogTitle>
             </DialogHeader>
-            <div className={`flex-1 overflow-y-auto pr-2 ${
-              hg ? 'text-gray-700' : 'text-slate-200'
-            }`}>
+            <div className={`flex-1 overflow-y-auto pr-2 ${hg ? 'text-gray-700' : 'text-slate-200'}`}>
               <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap leading-relaxed text-base">
                 {activity.text}
               </div>
@@ -242,4 +261,3 @@ export function ActivityItem({ activity }: ActivityItemProps) {
     </>
   );
 }
-
