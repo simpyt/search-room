@@ -109,8 +109,8 @@ export function ActivityFeed({ roomId, activities, onAIClick }: ActivityFeedProp
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Header */}
-      <div className={`px-4 py-3 border-b flex-shrink-0 ${hg ? 'border-gray-200' : 'border-slate-800'}`}>
+      {/* Header - extra right padding for Sheet close button on mobile */}
+      <div className={`px-4 pr-12 sm:pr-4 py-3 border-b flex-shrink-0 ${hg ? 'border-gray-200' : 'border-slate-800'}`}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className={`font-semibold ${hg ? 'text-gray-900' : 'text-white'}`}>Activity & Chat</h2>
