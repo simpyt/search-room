@@ -49,6 +49,7 @@ export function TogetherView() {
   const [searching, setSearching] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [criteriaExpanded, setCriteriaExpanded] = useState(false);
 
   const roomId = room?.roomId;
 
@@ -215,81 +216,128 @@ export function TogetherView() {
     );
   }
 
+  // Generate criteria summary for collapsed state
+  const getCriteriaSummary = () => {
+    const userIds = Object.keys(usersCriteria);
+    const criteriaCount = userIds.filter(id => usersCriteria[id]).length;
+    if (criteriaCount === 0) return 'No criteria set yet';
+    if (combinedCriteria) {
+      const c = combinedCriteria.criteria;
+      return `${c.location || 'Any location'} • ${c.priceTo ? `≤${c.priceTo.toLocaleString()} CHF` : 'Any price'} • ${c.roomsFrom ? `${c.roomsFrom}+ rooms` : 'Any rooms'}`;
+    }
+    return `${criteriaCount} member${criteriaCount > 1 ? 's' : ''} have set criteria`;
+  };
+
   return (
     <div className="space-y-6">
-      {/* Compatibility Card */}
+      {/* Compatibility Card - Collapsible */}
       <CompatibilityCard
         compatibility={compatibility}
         onRecalculate={handleRecalculateCompatibility}
+        collapsible
+        defaultExpanded={false}
       />
 
-      {/* Criteria Comparison */}
+      {/* Criteria Comparison - Collapsible */}
       <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
-        <CardHeader>
-          <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Search Criteria</CardTitle>
-          <CardDescription>Compare and combine your preferences</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <CriteriaDiff usersCriteria={usersCriteria} combinedCriteria={combinedCriteria} />
-
-          {/* AI Prompt */}
-          <div className={`p-4 rounded-lg border ${
-            hg
-              ? 'bg-emerald-50 border-emerald-200'
-              : 'bg-emerald-500/5 border-emerald-500/20'
-          }`}>
-            <h4 className={`text-sm font-medium mb-2 ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>
-              AI Assistant
-            </h4>
-            <Textarea
-              placeholder="Describe what you're looking for... e.g., 'We want a 4.5 room apartment near Fribourg, under 1.2M, ideally with a balcony and parking.'"
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              className={hg
-                ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 min-h-[80px]'
-                : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 min-h-[80px]'
-              }
-            />
-            <Button
-              onClick={handleAIBuildCriteria}
-              disabled={!aiPrompt.trim() || aiLoading}
-              className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              {aiLoading ? 'Generating...' : 'Ask AI to Build Criteria'}
-            </Button>
-          </div>
-
-          {/* Search Controls */}
-          <div className={`flex items-center gap-4 pt-4 border-t ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Combine mode:</span>
-              <Select value={combineMode} onValueChange={(v) => setCombineMode(v as CombineMode)}>
-                <SelectTrigger className={`w-[180px] ${
-                  hg
-                    ? 'bg-white border-gray-300'
-                    : 'bg-slate-800/50 border-slate-700'
-                }`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Inclusive (OR)</SelectItem>
-                  <SelectItem value="mixed">Balanced</SelectItem>
-                  <SelectItem value="strict">Strict (AND)</SelectItem>
-                </SelectContent>
-              </Select>
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setCriteriaExpanded(!criteriaExpanded)}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Search Criteria</CardTitle>
+              <CardDescription>
+                {criteriaExpanded ? 'Compare and combine your preferences' : getCriteriaSummary()}
+              </CardDescription>
             </div>
             <Button
-              onClick={handleSearch}
-              disabled={searching}
-              className={hg
-                ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
-                : 'bg-sky-600 hover:bg-sky-700'
-              }
+              variant="ghost"
+              size="icon"
+              className={`flex-shrink-0 ${hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white'}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCriteriaExpanded(!criteriaExpanded);
+              }}
             >
-              {searching ? 'Searching...' : 'Search Properties'}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`h-5 w-5 transition-transform duration-200 ${criteriaExpanded ? 'rotate-180' : ''}`}
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
             </Button>
           </div>
-        </CardContent>
+        </CardHeader>
+        {criteriaExpanded && (
+          <CardContent className="space-y-4">
+            <CriteriaDiff usersCriteria={usersCriteria} combinedCriteria={combinedCriteria} />
+
+            {/* AI Prompt */}
+            <div className={`p-4 rounded-lg border ${
+              hg
+                ? 'bg-emerald-50 border-emerald-200'
+                : 'bg-emerald-500/5 border-emerald-500/20'
+            }`}>
+              <h4 className={`text-sm font-medium mb-2 ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                AI Assistant
+              </h4>
+              <Textarea
+                placeholder="Describe what you're looking for... e.g., 'We want a 4.5 room apartment near Fribourg, under 1.2M, ideally with a balcony and parking.'"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                className={hg
+                  ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 min-h-[80px]'
+                  : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 min-h-[80px]'
+                }
+              />
+              <Button
+                onClick={handleAIBuildCriteria}
+                disabled={!aiPrompt.trim() || aiLoading}
+                className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                {aiLoading ? 'Generating...' : 'Ask AI to Build Criteria'}
+              </Button>
+            </div>
+
+            {/* Search Controls */}
+            <div className={`flex items-center gap-4 pt-4 border-t ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Combine mode:</span>
+                <Select value={combineMode} onValueChange={(v) => setCombineMode(v as CombineMode)}>
+                  <SelectTrigger className={`w-[180px] ${
+                    hg
+                      ? 'bg-white border-gray-300'
+                      : 'bg-slate-800/50 border-slate-700'
+                  }`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Inclusive (OR)</SelectItem>
+                    <SelectItem value="mixed">Balanced</SelectItem>
+                    <SelectItem value="strict">Strict (AND)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                onClick={handleSearch}
+                disabled={searching}
+                className={hg
+                  ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+                  : 'bg-sky-600 hover:bg-sky-700'
+                }
+              >
+                {searching ? 'Searching...' : 'Search Properties'}
+              </Button>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Search Results */}
