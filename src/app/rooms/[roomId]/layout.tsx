@@ -197,7 +197,7 @@ export default function RoomLayout({
             ? 'border-gray-200 bg-white/95 backdrop-blur-sm'
             : 'border-slate-800 bg-slate-900/50 backdrop-blur-xl'
         }`}>
-          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="px-4 h-16 flex items-center justify-between">
             {/* Left: Back + Room info */}
             <div className="flex items-center gap-3">
               <Button
