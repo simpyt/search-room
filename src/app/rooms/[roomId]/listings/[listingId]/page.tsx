@@ -186,10 +186,38 @@ export default function ListingDetailPage() {
             </div>
           </Card>
 
-          {/* Status Timeline */}
+          {/* Status Timeline + Update */}
           <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
-            <CardHeader>
-              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Status Journey</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Status</CardTitle>
+              <Select
+                value={listing.status}
+                onValueChange={(v) => handleStatusChange(v as ListingStatus)}
+                disabled={updating}
+              >
+                <SelectTrigger className={`w-auto gap-2 ${hg ? 'bg-white border-gray-300' : 'bg-slate-800/50 border-slate-700'}`}>
+                  <SelectValue>
+                    <Badge
+                      variant="outline"
+                      className={`${LISTING_STATUS_COLORS[listing.status]} border-transparent text-white`}
+                    >
+                      {LISTING_STATUS_LABELS[listing.status]}
+                    </Badge>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {LISTING_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      <Badge
+                        variant="outline"
+                        className={`${LISTING_STATUS_COLORS[status]} border-transparent text-white`}
+                      >
+                        {LISTING_STATUS_LABELS[status]}
+                      </Badge>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </CardHeader>
             <CardContent>
               <StatusTimeline currentStatus={listing.status} />
@@ -282,43 +310,6 @@ export default function ListingDetailPage() {
                   })}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Status change */}
-          <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
-            <CardHeader>
-              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Update Status</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Select
-                value={listing.status}
-                onValueChange={(v) => handleStatusChange(v as ListingStatus)}
-                disabled={updating}
-              >
-                <SelectTrigger className={hg ? 'bg-white border-gray-300' : 'bg-slate-800/50 border-slate-700'}>
-                  <SelectValue>
-                    <Badge
-                      variant="outline"
-                      className={`${LISTING_STATUS_COLORS[listing.status]} border-transparent text-white`}
-                    >
-                      {LISTING_STATUS_LABELS[listing.status]}
-                    </Badge>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {LISTING_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      <Badge
-                        variant="outline"
-                        className={`${LISTING_STATUS_COLORS[status]} border-transparent text-white`}
-                      >
-                        {LISTING_STATUS_LABELS[status]}
-                      </Badge>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </CardContent>
           </Card>
 
