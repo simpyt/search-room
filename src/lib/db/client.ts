@@ -1,13 +1,21 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
-const client = new DynamoDBClient({
+// Use default credential provider chain (SSO, env vars, IAM roles, etc.)
+// Only set explicit credentials if provided in env vars
+const clientConfig: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
   region: process.env.AWS_REGION || 'eu-central-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
+};
+
+// If explicit credentials are provided, use them; otherwise let SDK use default chain
+if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+  clientConfig.credentials = {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  };
+}
+
+const client = new DynamoDBClient(clientConfig);
 
 export const docClient = DynamoDBDocumentClient.from(client, {
   marshallOptions: {

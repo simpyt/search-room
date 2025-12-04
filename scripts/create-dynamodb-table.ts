@@ -1,12 +1,17 @@
 /**
  * Script to create the DynamoDB table for Search Room
  * 
- * Run with: npx ts-node scripts/create-dynamodb-table.ts
+ * Run with: npm run db:create
  * 
  * Prerequisites:
- * - AWS credentials configured (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
- * - AWS_REGION set (defaults to eu-central-1)
+ * - AWS credentials in .env.local
  */
+
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load .env.local
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 import {
   DynamoDBClient,
@@ -18,12 +23,11 @@ import {
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'search-room';
 const REGION = process.env.AWS_REGION || 'eu-central-1';
 
+// Use default credential provider chain (supports SSO, env vars, IAM roles, etc.)
 const client = new DynamoDBClient({
   region: REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
+  // Don't explicitly set credentials - let SDK use default chain
+  // This picks up AWS SSO, ~/.aws/credentials, env vars, IAM roles automatically
 });
 
 async function tableExists(): Promise<boolean> {
@@ -99,12 +103,9 @@ async function main(): Promise<void> {
   console.log('='.repeat(50));
   console.log();
 
-  // Check credentials
-  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    console.error('Error: AWS credentials not found!');
-    console.error('Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY');
-    process.exit(1);
-  }
+  console.log(`Using region: ${REGION}`);
+  console.log(`Table name: ${TABLE_NAME}`);
+  console.log();
 
   // Check if table exists
   const exists = await tableExists();

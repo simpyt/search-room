@@ -1,10 +1,16 @@
 /**
  * Script to delete the DynamoDB table for Search Room
  * 
- * Run with: npx ts-node scripts/delete-dynamodb-table.ts
+ * Run with: npm run db:delete
  * 
  * WARNING: This will permanently delete all data!
  */
+
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load .env.local
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 import {
   DynamoDBClient,
@@ -17,12 +23,9 @@ import * as readline from 'readline';
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'search-room';
 const REGION = process.env.AWS_REGION || 'eu-central-1';
 
+// Use default credential provider chain (supports SSO, env vars, IAM roles, etc.)
 const client = new DynamoDBClient({
   region: REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
 });
 
 async function confirm(message: string): Promise<boolean> {
