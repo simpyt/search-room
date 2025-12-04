@@ -1,4 +1,4 @@
-export type CriteriaWeight = 1 | 3 | 5;
+export type CriteriaWeight = 1 | 2 | 3 | 4 | 5;
 export type CriteriaSource = 'manual' | 'ai_proposed';
 export type CombineMode = 'all' | 'mixed' | 'strict';
 
@@ -62,7 +62,11 @@ export interface SearchCriteria {
   features?: Feature[];
 }
 
-export type CriteriaWeights = Partial<Record<keyof SearchCriteria, CriteriaWeight>>;
+export type FeatureWeights = Partial<Record<Feature, CriteriaWeight>>;
+
+export type CriteriaWeights = Partial<Record<keyof SearchCriteria, CriteriaWeight>> & {
+  featureWeights?: FeatureWeights;
+};
 
 export interface UserCriteria {
   roomId: string;

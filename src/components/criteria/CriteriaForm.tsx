@@ -138,14 +138,14 @@ export function CriteriaForm({
         <div className="space-y-2">
           <Label className="text-slate-300">Category</Label>
           <Select
-            value={criteria.category || ''}
-            onValueChange={(v) => updateCriteria('category', v as typeof CATEGORIES[number] || undefined)}
+            value={criteria.category || '__any__'}
+            onValueChange={(v) => updateCriteria('category', v === '__any__' ? undefined : v as typeof CATEGORIES[number])}
           >
             <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
               <SelectValue placeholder="Any category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any category</SelectItem>
+              <SelectItem value="__any__">Any category</SelectItem>
               {CATEGORIES.map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat.charAt(0).toUpperCase() + cat.slice(1)}
