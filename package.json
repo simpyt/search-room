@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:create": "npx ts-node --skip-project scripts/create-dynamodb-table.ts",
-    "db:delete": "npx ts-node --skip-project scripts/delete-dynamodb-table.ts"
+    "db:delete": "npx ts-node --skip-project scripts/delete-dynamodb-table.ts",
+    "db:test": "npx ts-node --skip-project scripts/test-db-connection.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.943.0",

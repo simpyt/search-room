@@ -76,20 +76,32 @@ async function createTable(): Promise<void> {
 async function waitForTableActive(): Promise<void> {
   console.log('Waiting for table to become active...');
   
+  // Initial delay to let AWS register the table
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  
   let attempts = 0;
   const maxAttempts = 30;
   
   while (attempts < maxAttempts) {
-    const response = await client.send(
-      new DescribeTableCommand({ TableName: TABLE_NAME })
-    );
-    
-    if (response.Table?.TableStatus === 'ACTIVE') {
-      console.log('Table is now ACTIVE!');
-      return;
+    try {
+      const response = await client.send(
+        new DescribeTableCommand({ TableName: TABLE_NAME })
+      );
+      
+      if (response.Table?.TableStatus === 'ACTIVE') {
+        console.log('Table is now ACTIVE!');
+        return;
+      }
+      
+      console.log(`  Status: ${response.Table?.TableStatus}...`);
+    } catch (error) {
+      if (error instanceof ResourceNotFoundException) {
+        console.log('  Waiting for table to be registered...');
+      } else {
+        throw error;
+      }
     }
     
-    console.log(`  Status: ${response.Table?.TableStatus}...`);
     await new Promise((resolve) => setTimeout(resolve, 2000));
     attempts++;
   }
