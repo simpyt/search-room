@@ -36,6 +36,7 @@ export function MyView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [criteriaExpanded, setCriteriaExpanded] = useState(false);
 
   const roomId = room?.roomId;
   const partnerId = room?.members.find((m) => m.userId !== user?.id)?.userId;
@@ -176,41 +177,77 @@ export function MyView() {
 
   return (
     <div className="space-y-6">
-      {/* My Criteria */}
+      {/* My Criteria - Collapsible */}
       <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
-        <CardHeader>
-          <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Search Criteria</CardTitle>
-          <CardDescription>
-            Set your preferences and priorities with weights
-          </CardDescription>
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setCriteriaExpanded(!criteriaExpanded)}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Search Criteria</CardTitle>
+              <CardDescription>
+                {criteriaExpanded
+                  ? 'Set your preferences and priorities with weights'
+                  : myCriteria
+                    ? `${myCriteria.criteria.location || 'Any location'} • ${myCriteria.criteria.priceTo ? `≤${myCriteria.criteria.priceTo.toLocaleString()} CHF` : 'Any price'} • ${myCriteria.criteria.roomsFrom ? `${myCriteria.criteria.roomsFrom}+ rooms` : 'Any rooms'}`
+                    : 'Click to set your preferences'
+                }
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`flex-shrink-0 ${hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white'}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCriteriaExpanded(!criteriaExpanded);
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`h-5 w-5 transition-transform duration-200 ${criteriaExpanded ? 'rotate-180' : ''}`}
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent>
-          <CriteriaForm
-            initialCriteria={myCriteria?.criteria}
-            initialWeights={myCriteria?.weights}
-            onSubmit={handleSaveCriteria}
-            submitLabel="Save My Criteria"
-            showWeights={true}
-            loading={saving}
-          />
-        </CardContent>
+        {criteriaExpanded && (
+          <CardContent>
+            <CriteriaForm
+              initialCriteria={myCriteria?.criteria}
+              initialWeights={myCriteria?.weights}
+              onSubmit={handleSaveCriteria}
+              submitLabel="Save My Criteria"
+              showWeights={true}
+              loading={saving}
+            />
+          </CardContent>
+        )}
       </Card>
 
       {/* Personal Search */}
       <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1.5">
               <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Search Results</CardTitle>
               <CardDescription>Results based on your personal criteria</CardDescription>
             </div>
             <Button
               onClick={handleSearchPersonal}
               disabled={searching || !myCriteria}
-              className={hg
+              className={`flex-shrink-0 ${hg
                 ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
                 : 'bg-sky-600 hover:bg-sky-700'
-              }
+              }`}
             >
               {searching ? 'Searching...' : 'Search with My Criteria'}
             </Button>
