@@ -59,7 +59,7 @@ Keep responses concise and helpful. If asked about specific criteria or compatib
 
   try {
     const response = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -96,7 +96,9 @@ Available fields:
 
 For weights, use:
 - 1 for "nice to have" / trivial preferences
+- 2 for "nice to have" preferences
 - 3 for "important" preferences  
+- 4 for "very important" preferences
 - 5 for "must have" / essential requirements
 
 Respond with a JSON object containing:
@@ -108,7 +110,7 @@ Respond with a JSON object containing:
 
   try {
     const response = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -175,7 +177,7 @@ Respond with JSON:
 
   try {
     const response = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -231,7 +233,7 @@ Respond with JSON:
 
   try {
     const response = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         {
