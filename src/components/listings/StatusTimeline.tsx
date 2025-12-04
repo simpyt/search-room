@@ -41,7 +41,7 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                 <div
                   className={`absolute top-3 right-1/2 w-full h-0.5 ${
                     isPast || isCurrent
-                      ? LISTING_STATUS_COLORS[status].replace('bg-', 'bg-opacity-50 ')
+                      ? LISTING_STATUS_COLORS[currentStatus]
                       : hg ? 'bg-gray-300' : 'bg-slate-700'
                   }`}
                   style={{ transform: 'translateX(-50%)' }}
@@ -55,7 +55,7 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                     isCurrent
                       ? LISTING_STATUS_COLORS[status]
                       : isPast
-                      ? LISTING_STATUS_COLORS[status] + ' opacity-50'
+                      ? LISTING_STATUS_COLORS[currentStatus]
                       : hg ? 'bg-gray-300' : 'bg-slate-700'
                   }`}
                 >
@@ -83,7 +83,7 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                     isCurrent
                       ? hg ? 'text-gray-900 font-medium' : 'text-white font-medium'
                       : isPast
-                      ? hg ? 'text-gray-500' : 'text-slate-400'
+                      ? hg ? 'text-gray-700' : 'text-slate-300'
                       : hg ? 'text-gray-400' : 'text-slate-500'
                   }`}
                 >
