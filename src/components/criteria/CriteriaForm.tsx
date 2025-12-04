@@ -17,6 +17,7 @@ import {
   type SearchCriteria,
   type CriteriaWeights,
   type CriteriaWeight,
+  type Feature,
   FEATURES,
   FEATURE_LABELS,
   CATEGORIES,
@@ -60,12 +61,28 @@ export function CriteriaForm({
     });
   };
 
-  const toggleFeature = (feature: string) => {
+  const updateFeatureWeight = (feature: Feature, weight: CriteriaWeight | undefined) => {
+    setWeights((prev) => {
+      const currentFeatureWeights = prev.featureWeights || {};
+      if (weight === undefined) {
+        const { [feature]: _, ...rest } = currentFeatureWeights;
+        return { ...prev, featureWeights: Object.keys(rest).length > 0 ? rest : undefined };
+      }
+      return { ...prev, featureWeights: { ...currentFeatureWeights, [feature]: weight } };
+    });
+  };
+
+  const toggleFeature = (feature: Feature) => {
     const currentFeatures = criteria.features || [];
-    const newFeatures = currentFeatures.includes(feature as (typeof FEATURES)[number])
+    const isRemoving = currentFeatures.includes(feature);
+    const newFeatures = isRemoving
       ? currentFeatures.filter((f) => f !== feature)
-      : [...currentFeatures, feature as (typeof FEATURES)[number]];
+      : [...currentFeatures, feature];
     updateCriteria('features', newFeatures);
+    // Clear weight when unchecking
+    if (isRemoving) {
+      updateFeatureWeight(feature, undefined);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -292,28 +309,37 @@ export function CriteriaForm({
 
       {/* Features */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-slate-300">Features & Furnishings</Label>
-          {showWeights && (
-            <WeightSelector
-              value={weights.features}
-              onChange={(w) => updateWeight('features', w)}
-            />
-          )}
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
-          {FEATURES.map((feature) => (
-            <div key={feature} className="flex items-center gap-2">
-              <Checkbox
-                id={feature}
-                checked={criteria.features?.includes(feature) || false}
-                onCheckedChange={() => toggleFeature(feature)}
-              />
-              <Label htmlFor={feature} className="text-sm text-slate-400 cursor-pointer">
-                {FEATURE_LABELS[feature]}
-              </Label>
-            </div>
-          ))}
+        <Label className="text-slate-300">Features & Furnishings</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
+          {FEATURES.map((feature) => {
+            const isChecked = criteria.features?.includes(feature) || false;
+            return (
+              <div
+                key={feature}
+                className="flex items-center justify-between gap-2 py-1"
+              >
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id={feature}
+                    checked={isChecked}
+                    onCheckedChange={() => toggleFeature(feature)}
+                  />
+                  <Label
+                    htmlFor={feature}
+                    className="text-sm text-slate-400 cursor-pointer"
+                  >
+                    {FEATURE_LABELS[feature]}
+                  </Label>
+                </div>
+                {showWeights && isChecked && (
+                  <WeightSelector
+                    value={weights.featureWeights?.[feature]}
+                    onChange={(w) => updateFeatureWeight(feature, w)}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
