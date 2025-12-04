@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -152,10 +153,13 @@ export default function ListingDetailPage() {
           <Card className="border-slate-700/50 bg-slate-900/50 overflow-hidden">
             <div className="aspect-video bg-slate-800 relative">
               {listing.imageUrl ? (
-                <img
+                <Image
                   src={listing.imageUrl}
                   alt={listing.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(min-width: 1024px) 66vw, 100vw"
+                  className="object-cover"
+                  priority
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

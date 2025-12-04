@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,10 +47,13 @@ export function ResultsGrid({ results, favorites, onPin }: ResultsGridProps) {
             {/* Image placeholder */}
             <div className="aspect-[16/10] bg-slate-700/50 relative">
               {result.imageUrl ? (
-                <img
+                <Image
                   src={result.imageUrl}
                   alt={result.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                  priority
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
