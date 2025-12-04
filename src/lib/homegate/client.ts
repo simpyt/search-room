@@ -324,14 +324,8 @@ export async function searchHomegate(
   criteria: SearchCriteria,
   options?: { size?: number; from?: number }
 ): Promise<HomegateSearchResponse> {
-  const apiUrl = process.env.HOMEGATE_API_URL;
-  const trafficIdentifier = process.env.HOMEGATE_TRAFFIC_IDENTIFIER;
-
-  // Fall back to mock if no credentials
-  if (!trafficIdentifier || !apiUrl) {
-    console.warn('Missing HOMEGATE_API_URL or HOMEGATE_TRAFFIC_IDENTIFIER, using mock data');
-    return getMockResults(criteria);
-  }
+  const apiUrl = process.env.HOMEGATE_API_URL || 'https://apitest.homegate.ch/search';
+  const trafficIdentifier = process.env.HOMEGATE_TRAFFIC_IDENTIFIER || 'search-room-hackathon';
 
   const requestBody: SearchRequestBody = {
     fieldset: 'web-srp-list',
