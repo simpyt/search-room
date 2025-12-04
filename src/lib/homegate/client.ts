@@ -1,135 +1,376 @@
-import type { SearchCriteria } from '@/lib/types';
+import type { SearchCriteria, Feature } from '@/lib/types';
 
-interface HomegateSearchResult {
+// --- Types ---
+
+export interface HomegateSearchResult {
   id: string;
   title: string;
   location: string;
   address?: string;
   price?: number;
+  currency?: string;
   rooms?: number;
   livingSpace?: number;
   imageUrl?: string;
   externalUrl?: string;
+  listingType?: 'STANDARD' | 'PREMIUM' | 'TOP';
 }
 
-interface HomegateSearchResponse {
+export interface HomegateSearchResponse {
   results: HomegateSearchResult[];
   totalCount: number;
 }
 
-// Map our criteria to Homegate API parameters
-function mapCriteriaToParams(criteria: SearchCriteria): Record<string, string> {
-  const params: Record<string, string> = {};
-
-  if (criteria.location) {
-    params.loc = criteria.location;
-  }
-
-  if (criteria.radius) {
-    params.radius = String(criteria.radius);
-  }
-
-  if (criteria.offerType) {
-    params.offerType = criteria.offerType === 'buy' ? 'SALE' : 'RENT';
-  }
-
-  if (criteria.category) {
-    params.category = criteria.category.toUpperCase();
-  }
-
-  if (criteria.priceFrom) {
-    params.priceFrom = String(criteria.priceFrom);
-  }
-
-  if (criteria.priceTo) {
-    params.priceTo = String(criteria.priceTo);
-  }
-
-  if (criteria.roomsFrom) {
-    params.roomsFrom = String(criteria.roomsFrom);
-  }
-
-  if (criteria.roomsTo) {
-    params.roomsTo = String(criteria.roomsTo);
-  }
-
-  if (criteria.livingSpaceFrom) {
-    params.surfaceFrom = String(criteria.livingSpaceFrom);
-  }
-
-  if (criteria.livingSpaceTo) {
-    params.surfaceTo = String(criteria.livingSpaceTo);
-  }
-
-  if (criteria.freeText) {
-    params.query = criteria.freeText;
-  }
-
-  return params;
+// API Request Types
+interface SearchQuery {
+  offerType: 'RENT' | 'BUY';
+  categories?: string[];
+  excludeCategories?: string[];
+  location?: {
+    geoTags?: string[];
+    radius?: number;
+  };
+  numberOfRooms?: { from?: number; to?: number };
+  monthlyRent?: { from?: number; to?: number };
+  price?: { from?: number; to?: number };
+  livingSpace?: { from?: number; to?: number };
+  yearBuilt?: { from?: number; to?: number };
+  floor?: { from?: number };
+  availableDate?: { from?: string };
+  text?: { query: string; language?: string };
+  isPriceDefined?: boolean;
+  hasBalcony?: boolean;
+  hasElevator?: boolean;
+  hasWheelchairAccess?: boolean;
+  hasParking?: boolean;
+  hasMinergie?: boolean;
+  isNewBuilding?: boolean;
+  isOldBuilding?: boolean;
+  hasPool?: boolean;
 }
 
+interface SearchRequestBody {
+  fieldset: 'web-srp-list' | 'web-srp-map';
+  size: number;
+  from?: number;
+  sort?: {
+    field: 'dateCreated' | 'price' | 'exclusive';
+    direction: 'asc' | 'desc';
+  };
+  countTotalHitsPrecisely?: boolean;
+  query: SearchQuery;
+}
+
+// API Response Types
+interface ApiListingLocalization {
+  text?: {
+    title?: string;
+    description?: string;
+  };
+  attachments?: Array<{
+    type: string;
+    url: string;
+    file?: string;
+  }>;
+}
+
+interface ApiListing {
+  id: string;
+  offerType: string;
+  categories?: string[];
+  localization?: Record<string, ApiListingLocalization> & { primary?: string };
+  address?: {
+    locality?: string;
+    postalCode?: string;
+    region?: string;
+    country?: string;
+    street?: string;
+    geoCoordinates?: {
+      latitude: number;
+      longitude: number;
+      accuracy?: string;
+    };
+  };
+  characteristics?: {
+    numberOfRooms?: number;
+    livingSpace?: number;
+    hasBalcony?: boolean;
+    floor?: number;
+  };
+  prices?: {
+    currency?: string;
+    rent?: {
+      gross?: number;
+      net?: number;
+      extra?: number;
+      interval?: string;
+    };
+    buy?: {
+      price?: number;
+    };
+  };
+  availableFrom?: string;
+  meta?: {
+    createdAt?: string;
+    updatedAt?: string;
+  };
+}
+
+interface ApiSearchResult {
+  id: string;
+  listing: ApiListing;
+  listingType?: {
+    type: 'STANDARD' | 'PREMIUM' | 'TOP';
+  };
+  listingCard?: {
+    size: string;
+  };
+  listerBranding?: {
+    logoUrl?: string;
+    legalName?: string;
+    isPremiumBranding?: boolean;
+  };
+}
+
+interface ApiSearchResponse {
+  results: ApiSearchResult[];
+  total: number;
+}
+
+// --- Feature to API boolean mapping ---
+
+const FEATURE_TO_API_PARAM: Record<Feature, keyof SearchQuery> = {
+  balcony: 'hasBalcony',
+  terrace: 'hasBalcony', // API uses hasBalcony for both
+  elevator: 'hasElevator',
+  wheelchair_access: 'hasWheelchairAccess',
+  parking: 'hasParking',
+  garage: 'hasParking', // API uses hasParking for both
+  minergie: 'hasMinergie',
+  new_building: 'isNewBuilding',
+  old_building: 'isOldBuilding',
+  swimming_pool: 'hasPool',
+};
+
+// --- Category mapping ---
+
+const CATEGORY_MAP: Record<string, string[]> = {
+  apartment: ['APARTMENT', 'FLAT', 'MAISONETTE', 'DUPLEX', 'STUDIO', 'ATTIC'],
+  house: ['HOUSE'],
+  plot: ['AGRICULTURE'],
+  parking: ['PARKING'],
+  commercial: ['COMMERCIAL', 'OFFICE', 'GASTRONOMY', 'INDUSTRIAL', 'RETAIL', 'STORAGE'],
+};
+
+// --- Radius mapping (km to meters) ---
+
+const VALID_RADII = [0, 1000, 2000, 3000, 5000, 10000, 15000, 25000, 50000];
+
+function mapRadiusToApi(radiusKm?: number): number | undefined {
+  if (!radiusKm) return undefined;
+  const radiusMeters = radiusKm * 1000;
+  // Find closest valid radius
+  return VALID_RADII.reduce((prev, curr) =>
+    Math.abs(curr - radiusMeters) < Math.abs(prev - radiusMeters) ? curr : prev
+  );
+}
+
+// --- Build search query ---
+
+function buildSearchQuery(criteria: SearchCriteria): SearchQuery {
+  const query: SearchQuery = {
+    offerType: criteria.offerType === 'buy' ? 'BUY' : 'RENT',
+  };
+
+  // Categories
+  if (criteria.category) {
+    const mappedCategories = CATEGORY_MAP[criteria.category];
+    if (mappedCategories) {
+      query.categories = mappedCategories;
+    }
+  }
+
+  // Location
+  if (criteria.location) {
+    query.location = {
+      // Assume location is already a geo-tag or city name
+      // The API expects format like "geo-city-zurich"
+      geoTags: [criteria.location.startsWith('geo-') ? criteria.location : `geo-city-${criteria.location.toLowerCase().replace(/\s+/g, '-')}`],
+    };
+
+    const radius = mapRadiusToApi(criteria.radius);
+    if (radius !== undefined) {
+      query.location.radius = radius;
+    }
+  }
+
+  // Price
+  if (criteria.priceFrom !== undefined || criteria.priceTo !== undefined) {
+    const priceRange: { from?: number; to?: number } = {};
+    if (criteria.priceFrom !== undefined) priceRange.from = criteria.priceFrom;
+    if (criteria.priceTo !== undefined) priceRange.to = criteria.priceTo;
+
+    if (criteria.offerType === 'rent') {
+      query.monthlyRent = priceRange;
+    } else {
+      query.price = priceRange;
+    }
+  }
+
+  // Rooms
+  if (criteria.roomsFrom !== undefined || criteria.roomsTo !== undefined) {
+    query.numberOfRooms = {};
+    if (criteria.roomsFrom !== undefined) query.numberOfRooms.from = criteria.roomsFrom;
+    if (criteria.roomsTo !== undefined) query.numberOfRooms.to = criteria.roomsTo;
+  }
+
+  // Living space
+  if (criteria.livingSpaceFrom !== undefined || criteria.livingSpaceTo !== undefined) {
+    query.livingSpace = {};
+    if (criteria.livingSpaceFrom !== undefined) query.livingSpace.from = criteria.livingSpaceFrom;
+    if (criteria.livingSpaceTo !== undefined) query.livingSpace.to = criteria.livingSpaceTo;
+  }
+
+  // Year built
+  if (criteria.yearBuiltFrom !== undefined || criteria.yearBuiltTo !== undefined) {
+    query.yearBuilt = {};
+    if (criteria.yearBuiltFrom !== undefined) query.yearBuilt.from = criteria.yearBuiltFrom;
+    if (criteria.yearBuiltTo !== undefined) query.yearBuilt.to = criteria.yearBuiltTo;
+  }
+
+  // Floor
+  if (criteria.floor !== undefined) {
+    query.floor = { from: criteria.floor };
+  }
+
+  // Availability
+  if (criteria.availability) {
+    query.availableDate = { from: criteria.availability };
+  }
+
+  // Free text
+  if (criteria.freeText) {
+    query.text = { query: criteria.freeText, language: 'de' };
+  }
+
+  // Only with price
+  if (criteria.onlyWithPrice) {
+    query.isPriceDefined = true;
+  }
+
+  // Features -> boolean flags
+  if (criteria.features && criteria.features.length > 0) {
+    for (const feature of criteria.features) {
+      const apiParam = FEATURE_TO_API_PARAM[feature];
+      if (apiParam) {
+        (query as Record<string, unknown>)[apiParam] = true;
+      }
+    }
+  }
+
+  return query;
+}
+
+// --- Transform API response ---
+
+function transformApiResponse(data: ApiSearchResponse, offerType: 'buy' | 'rent'): HomegateSearchResponse {
+  const results: HomegateSearchResult[] = data.results.map((item) => {
+    const listing = item.listing;
+    const primaryLang = (listing.localization?.primary as string) || 'de';
+    const localized = listing.localization?.[primaryLang];
+
+    // Get price based on offer type
+    let price: number | undefined;
+    if (offerType === 'rent') {
+      price = listing.prices?.rent?.gross ?? listing.prices?.rent?.net;
+    } else {
+      price = listing.prices?.buy?.price;
+    }
+
+    // Build address string
+    let address: string | undefined;
+    if (listing.address) {
+      const parts = [listing.address.street, listing.address.postalCode, listing.address.locality].filter(Boolean);
+      address = parts.length > 0 ? parts.join(', ') : undefined;
+    }
+
+    // Get first image
+    const imageUrl = localized?.attachments?.find((a) => a.type === 'IMAGE')?.url;
+
+    return {
+      id: listing.id,
+      title: localized?.text?.title || 'Property',
+      location: listing.address?.locality || 'Unknown',
+      address,
+      price,
+      currency: listing.prices?.currency || 'CHF',
+      rooms: listing.characteristics?.numberOfRooms,
+      livingSpace: listing.characteristics?.livingSpace,
+      imageUrl,
+      externalUrl: `https://www.homegate.ch/${offerType === 'rent' ? 'rent' : 'buy'}/${listing.id}`,
+      listingType: item.listingType?.type,
+    };
+  });
+
+  return {
+    results,
+    totalCount: data.total,
+  };
+}
+
+// --- Main search function ---
+
 export async function searchHomegate(
-  criteria: SearchCriteria
+  criteria: SearchCriteria,
+  options?: { size?: number; from?: number }
 ): Promise<HomegateSearchResponse> {
   const apiUrl = process.env.HOMEGATE_API_URL;
-  const apiKey = process.env.HOMEGATE_API_KEY;
+  const trafficIdentifier = process.env.HOMEGATE_TRAFFIC_IDENTIFIER;
 
-  // If no API key, return mock data
-  if (!apiKey || !apiUrl) {
+  // Fall back to mock if no credentials
+  if (!trafficIdentifier || !apiUrl) {
+    console.warn('Missing HOMEGATE_API_URL or HOMEGATE_TRAFFIC_IDENTIFIER, using mock data');
     return getMockResults(criteria);
   }
 
-  try {
-    const params = mapCriteriaToParams(criteria);
-    const queryString = new URLSearchParams(params).toString();
+  const requestBody: SearchRequestBody = {
+    fieldset: 'web-srp-list',
+    size: options?.size ?? 20,
+    from: options?.from ?? 0,
+    sort: {
+      field: 'dateCreated',
+      direction: 'desc',
+    },
+    countTotalHitsPrecisely: true,
+    query: buildSearchQuery(criteria),
+  };
 
-    const response = await fetch(`${apiUrl}/search?${queryString}`, {
+  try {
+    const response = await fetch(`${apiUrl}/listings`, {
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        'Accept-Language': 'de',
+        'X-Homegate-Traffic-Identifier': trafficIdentifier,
       },
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
-      console.error('Homegate API error:', response.status);
+      console.error('Homegate API error:', response.status, await response.text());
       return getMockResults(criteria);
     }
 
-    const data = await response.json();
-
-    // Transform Homegate response to our format
-    return {
-      results: transformHomegateResults(data),
-      totalCount: data.totalCount || data.results?.length || 0,
-    };
+    const data: ApiSearchResponse = await response.json();
+    return transformApiResponse(data, criteria.offerType);
   } catch (error) {
     console.error('Homegate search error:', error);
     return getMockResults(criteria);
   }
 }
 
-function transformHomegateResults(data: unknown): HomegateSearchResult[] {
-  // This would be adapted based on actual Homegate API response structure
-  // For now, assume data.results is an array
-  const results = (data as { results?: unknown[] })?.results || [];
+// --- Mock data for development ---
 
-  return results.map((item: unknown) => {
-    const i = item as Record<string, unknown>;
-    return {
-      id: String(i.id || Math.random().toString(36).substr(2, 9)),
-      title: String(i.title || 'Property'),
-      location: String(i.location || i.city || 'Unknown'),
-      address: i.address ? String(i.address) : undefined,
-      price: typeof i.price === 'number' ? i.price : undefined,
-      rooms: typeof i.rooms === 'number' ? i.rooms : undefined,
-      livingSpace: typeof i.livingSpace === 'number' ? i.livingSpace : undefined,
-      imageUrl: i.imageUrl ? String(i.imageUrl) : undefined,
-      externalUrl: i.url ? String(i.url) : undefined,
-    };
-  });
-}
-
-// Mock data for development/demo
 function getMockResults(criteria: SearchCriteria): HomegateSearchResponse {
   const location = criteria.location || 'Switzerland';
   const basePrice = criteria.offerType === 'buy' ? 800000 : 2000;
@@ -142,10 +383,12 @@ function getMockResults(criteria: SearchCriteria): HomegateSearchResponse {
       location: location,
       address: 'Bahnhofstrasse 10',
       price: basePrice + Math.floor(Math.random() * priceRange),
+      currency: 'CHF',
       rooms: 4.5,
       livingSpace: 120,
       imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400',
-      externalUrl: 'https://www.homegate.ch/rent/1234567',
+      externalUrl: `https://www.homegate.ch/${criteria.offerType}/1234567`,
+      listingType: 'STANDARD',
     },
     {
       id: 'mock-2',
@@ -153,10 +396,12 @@ function getMockResults(criteria: SearchCriteria): HomegateSearchResponse {
       location: location,
       address: 'Hauptstrasse 25',
       price: basePrice * 0.8 + Math.floor(Math.random() * priceRange * 0.8),
+      currency: 'CHF',
       rooms: 3.5,
       livingSpace: 85,
       imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400',
-      externalUrl: 'https://www.homegate.ch/rent/1234568',
+      externalUrl: `https://www.homegate.ch/${criteria.offerType}/1234568`,
+      listingType: 'PREMIUM',
     },
     {
       id: 'mock-3',
@@ -164,10 +409,12 @@ function getMockResults(criteria: SearchCriteria): HomegateSearchResponse {
       location: location,
       address: 'Gartenweg 5',
       price: basePrice * 1.5 + Math.floor(Math.random() * priceRange * 1.5),
+      currency: 'CHF',
       rooms: 5.5,
       livingSpace: 180,
       imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400',
-      externalUrl: 'https://www.homegate.ch/rent/1234569',
+      externalUrl: `https://www.homegate.ch/${criteria.offerType}/1234569`,
+      listingType: 'TOP',
     },
     {
       id: 'mock-4',
@@ -175,10 +422,12 @@ function getMockResults(criteria: SearchCriteria): HomegateSearchResponse {
       location: location,
       address: 'Stadtplatz 3',
       price: basePrice * 0.6 + Math.floor(Math.random() * priceRange * 0.6),
+      currency: 'CHF',
       rooms: 2.5,
       livingSpace: 55,
       imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400',
-      externalUrl: 'https://www.homegate.ch/rent/1234570',
+      externalUrl: `https://www.homegate.ch/${criteria.offerType}/1234570`,
+      listingType: 'STANDARD',
     },
     {
       id: 'mock-5',
@@ -186,10 +435,12 @@ function getMockResults(criteria: SearchCriteria): HomegateSearchResponse {
       location: location,
       address: 'Seestrasse 42',
       price: basePrice * 1.1 + Math.floor(Math.random() * priceRange),
+      currency: 'CHF',
       rooms: 4,
       livingSpace: 100,
       imageUrl: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400',
-      externalUrl: 'https://www.homegate.ch/rent/1234571',
+      externalUrl: `https://www.homegate.ch/${criteria.offerType}/1234571`,
+      listingType: 'STANDARD',
     },
     {
       id: 'mock-6',
@@ -197,10 +448,12 @@ function getMockResults(criteria: SearchCriteria): HomegateSearchResponse {
       location: location,
       address: 'Bergstrasse 100',
       price: basePrice * 2 + Math.floor(Math.random() * priceRange * 2),
+      currency: 'CHF',
       rooms: 6,
       livingSpace: 250,
       imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400',
-      externalUrl: 'https://www.homegate.ch/rent/1234572',
+      externalUrl: `https://www.homegate.ch/${criteria.offerType}/1234572`,
+      listingType: 'PREMIUM',
     },
   ];
 
@@ -225,4 +478,3 @@ function getMockResults(criteria: SearchCriteria): HomegateSearchResponse {
     totalCount: filtered.length,
   };
 }
-
