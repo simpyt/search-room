@@ -5,6 +5,10 @@ import { saveUserCriteria, saveCombinedCriteria } from '@/lib/db/criteria';
 import { logRoomCreated } from '@/lib/db/activities';
 import type { SearchCriteria, CriteriaWeights, RoomContext } from '@/lib/types';
 
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getSession();

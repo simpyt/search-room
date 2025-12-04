@@ -39,6 +39,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 });
+}
+
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const user = await getSession();
@@ -50,7 +54,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const isMember = await isUserMemberOfRoom(roomId, user.id);
     if (!isMember) {
-      return NextResponse.json({ error: 'Not a member' }, { status: 403 });
+      return NextResponse.json({ error: 'Not a member of this room' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -58,9 +62,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       externalId,
       title,
       location,
+      address,
       price,
+      currency,
       rooms,
       livingSpace,
+      yearBuilt,
+      features,
       imageUrl,
       externalUrl,
       sourceBrand = 'homegate',
@@ -78,7 +86,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const existing = await findListingByExternalId(roomId, externalId);
       if (existing) {
         return NextResponse.json(
-          { error: 'This listing is already in your favorites', listing: existing },
+          { error: 'Listing already exists', existingId: existing.listingId },
           { status: 409 }
         );
       }
@@ -90,9 +98,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       externalId,
       title,
       location,
+      address,
       price,
+      currency,
       rooms,
       livingSpace,
+      yearBuilt,
+      features,
       imageUrl,
       externalUrl,
       addedByUserId: user.id,
@@ -100,7 +112,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await logListingPinned(roomId, user.id, listing.listingId, title);
 
-    return NextResponse.json({ listing });
+    return NextResponse.json({ listingId: listing.listingId, listing }, { status: 201 });
   } catch (error) {
     console.error('Create listing error:', error);
     return NextResponse.json(

@@ -5,12 +5,12 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME, keys, skPrefix } from './client';
-import type { Listing, ListingStatus } from '@/lib/types';
+import type { Listing, ListingStatus, ListingSource } from '@/lib/types';
 import { v4 as uuid } from 'uuid';
 
 export interface CreateListingInput {
   roomId: string;
-  sourceBrand: 'homegate' | 'external_mock';
+  sourceBrand: ListingSource;
   externalId?: string;
   title: string;
   location: string;

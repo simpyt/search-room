@@ -33,7 +33,15 @@ export const LISTING_STATUS_COLORS: Record<ListingStatus, string> = {
   DELETED: 'bg-gray-400',
 };
 
-export type ListingSource = 'homegate' | 'external_mock';
+export type ListingSource =
+  | 'homegate'
+  | 'immoscout24'
+  | 'anibis'
+  | 'tutti'
+  | 'ricardo'
+  | 'facebook'
+  | 'comparis'
+  | 'other';
 
 export interface Listing {
   roomId: string;
