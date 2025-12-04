@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, createContext, useContext } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -53,6 +53,7 @@ export default function RoomLayout({
 }) {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const roomId = params.roomId as string;
 
   const [room, setRoom] = useState<RoomWithMembers | null>(null);
@@ -64,6 +65,7 @@ export default function RoomLayout({
   const [contextDialogOpen, setContextDialogOpen] = useState(false);
   const [contextDescription, setContextDescription] = useState('');
   const [contextSaving, setContextSaving] = useState(false);
+  const [chatInitialMessage, setChatInitialMessage] = useState('');
 
   const fetchRoom = async () => {
     try {
@@ -122,6 +124,17 @@ export default function RoomLayout({
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
+
+  // Handle discuss query param from listing detail page
+  useEffect(() => {
+    const discussTitle = searchParams.get('discuss');
+    if (discussTitle) {
+      setChatInitialMessage(`Let's discuss: ${discussTitle}`);
+      setSidebarOpen(true);
+      // Clear the query param from URL without navigation
+      router.replace(`/rooms/${roomId}`, { scroll: false });
+    }
+  }, [searchParams, roomId, router]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -438,7 +451,7 @@ export default function RoomLayout({
                     : 'bg-slate-900 border-slate-800'
                 }`}
               >
-                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} />
+                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} />
               </SheetContent>
             </Sheet>
           </div>
@@ -455,7 +468,7 @@ export default function RoomLayout({
               ? 'border-gray-200 bg-white'
               : 'border-slate-800 bg-slate-900/30'
           }`}>
-            <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} />
+            <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} />
           </aside>
         </div>
 

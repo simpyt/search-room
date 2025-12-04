@@ -21,6 +21,9 @@ const STATUS_ORDER: ListingStatus[] = [
   'ACCEPTED',
 ];
 
+// Fixed color for completed (past) steps
+const COMPLETED_COLOR = 'bg-black';
+
 export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
   const currentIndex = STATUS_ORDER.indexOf(currentStatus);
   const isRejectedOrDeleted = currentStatus === 'REJECTED' || currentStatus === 'DELETED';
@@ -41,7 +44,7 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                 <div
                   className={`absolute top-3 right-1/2 w-full h-0.5 ${
                     isPast || isCurrent
-                      ? LISTING_STATUS_COLORS[currentStatus]
+                      ? COMPLETED_COLOR
                       : hg ? 'bg-gray-300' : 'bg-slate-700'
                   }`}
                   style={{ transform: 'translateX(-50%)' }}
@@ -53,9 +56,9 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center ${
                     isCurrent
-                      ? LISTING_STATUS_COLORS[status]
-                      : isPast
                       ? LISTING_STATUS_COLORS[currentStatus]
+                      : isPast
+                      ? COMPLETED_COLOR
                       : hg ? 'bg-gray-300' : 'bg-slate-700'
                   }`}
                 >

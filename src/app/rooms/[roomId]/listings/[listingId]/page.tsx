@@ -195,14 +195,9 @@ export default function ListingDetailPage() {
                 onValueChange={(v) => handleStatusChange(v as ListingStatus)}
                 disabled={updating}
               >
-                <SelectTrigger className={`w-auto gap-2 ${hg ? 'bg-white border-gray-300' : 'bg-slate-800/50 border-slate-700'}`}>
+                <SelectTrigger className={`w-auto gap-2 ${LISTING_STATUS_COLORS[listing.status]} border-transparent text-white font-medium [&_svg]:text-white`}>
                   <SelectValue>
-                    <Badge
-                      variant="outline"
-                      className={`${LISTING_STATUS_COLORS[listing.status]} border-transparent text-white`}
-                    >
-                      {LISTING_STATUS_LABELS[listing.status]}
-                    </Badge>
+                    {LISTING_STATUS_LABELS[listing.status]}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -348,7 +343,7 @@ export default function ListingDetailPage() {
               <Button
                 variant="outline"
                 className={`w-full ${hg ? 'border-gray-300 hover:bg-gray-50' : 'border-slate-700 hover:bg-slate-800'}`}
-                onClick={() => router.push(`/rooms/${roomId}`)}
+                onClick={() => router.push(`/rooms/${roomId}?discuss=${encodeURIComponent(listing.title)}`)}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

@@ -23,10 +23,11 @@ interface ActivityFeedProps {
   roomId: string;
   activities: Activity[];
   onAIClick?: () => void;
+  initialMessage?: string;
 }
 
-export function ActivityFeed({ roomId, activities, onAIClick }: ActivityFeedProps) {
-  const [message, setMessage] = useState('');
+export function ActivityFeed({ roomId, activities, onAIClick, initialMessage }: ActivityFeedProps) {
+  const [message, setMessage] = useState(initialMessage || '');
   const [sending, setSending] = useState(false);
   const [waitingForAI, setWaitingForAI] = useState(false);
   const [archiveExpanded, setArchiveExpanded] = useState(false);
@@ -66,6 +67,13 @@ export function ActivityFeed({ roomId, activities, onAIClick }: ActivityFeedProp
   useEffect(() => {
     scrollToBottom();
   }, [activities, waitingForAI, scrollToBottom]);
+
+  // Update message when initialMessage prop changes
+  useEffect(() => {
+    if (initialMessage) {
+      setMessage(initialMessage);
+    }
+  }, [initialMessage]);
 
   const handleArchive = (activityId: string) => {
     setArchivedIds((prev) => new Set([...prev, activityId]));
