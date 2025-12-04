@@ -23,6 +23,7 @@ import {
   CATEGORIES,
   DEFAULT_CRITERIA,
 } from '@/lib/types';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface CriteriaFormProps {
   initialCriteria?: SearchCriteria;
@@ -90,13 +91,26 @@ export function CriteriaForm({
     onSubmit(criteria, weights);
   };
 
+  const hg = isHomegateTheme();
+  const labelClass = hg ? 'text-gray-700' : 'text-slate-300';
+  const mutedLabelClass = hg ? 'text-gray-500' : 'text-slate-400';
+  const inputClass = hg
+    ? 'bg-white border-gray-300 text-gray-900'
+    : 'bg-slate-800/50 border-slate-700 text-white';
+  const selectTriggerClass = hg
+    ? 'bg-white border-gray-300 text-gray-900'
+    : 'bg-slate-800/50 border-slate-700 text-white';
+  const featureBoxClass = hg
+    ? 'bg-gray-50 border-gray-200'
+    : 'bg-slate-800/30 border-slate-700/50';
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Location */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="location" className="text-slate-300">
+            <Label htmlFor="location" className={labelClass}>
               Location
             </Label>
             {showWeights && (
@@ -111,12 +125,12 @@ export function CriteriaForm({
             placeholder="e.g., Fribourg, Zürich"
             value={criteria.location || ''}
             onChange={(e) => updateCriteria('location', e.target.value)}
-            className="bg-slate-800/50 border-slate-700 text-white"
+            className={inputClass}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="radius" className="text-slate-300">
+          <Label htmlFor="radius" className={labelClass}>
             Radius (km)
           </Label>
           <Input
@@ -129,7 +143,7 @@ export function CriteriaForm({
             onChange={(e) =>
               updateCriteria('radius', e.target.value ? Number(e.target.value) : undefined)
             }
-            className="bg-slate-800/50 border-slate-700 text-white"
+            className={inputClass}
           />
         </div>
       </div>
@@ -137,12 +151,12 @@ export function CriteriaForm({
       {/* Offer Type & Category */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label className="text-slate-300">Offer Type</Label>
+          <Label className={labelClass}>Offer Type</Label>
           <Select
             value={criteria.offerType}
             onValueChange={(v) => updateCriteria('offerType', v as 'buy' | 'rent')}
           >
-            <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+            <SelectTrigger className={selectTriggerClass}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -153,12 +167,12 @@ export function CriteriaForm({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-slate-300">Category</Label>
+          <Label className={labelClass}>Category</Label>
           <Select
             value={criteria.category || '__any__'}
             onValueChange={(v) => updateCriteria('category', v === '__any__' ? undefined : v as typeof CATEGORIES[number])}
           >
-            <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+            <SelectTrigger className={selectTriggerClass}>
               <SelectValue placeholder="Any category" />
             </SelectTrigger>
             <SelectContent>
@@ -176,7 +190,7 @@ export function CriteriaForm({
       {/* Price Range */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-slate-300">Price Range (CHF)</Label>
+          <Label className={labelClass}>Price Range (CHF)</Label>
           {showWeights && (
             <WeightSelector
               value={weights.priceTo}
@@ -196,7 +210,7 @@ export function CriteriaForm({
             onChange={(e) =>
               updateCriteria('priceFrom', e.target.value ? Number(e.target.value) : undefined)
             }
-            className="bg-slate-800/50 border-slate-700 text-white"
+            className={inputClass}
           />
           <Input
             type="number"
@@ -206,7 +220,7 @@ export function CriteriaForm({
             onChange={(e) =>
               updateCriteria('priceTo', e.target.value ? Number(e.target.value) : undefined)
             }
-            className="bg-slate-800/50 border-slate-700 text-white"
+            className={inputClass}
           />
         </div>
         <div className="flex items-center gap-2 mt-2">
@@ -217,7 +231,7 @@ export function CriteriaForm({
               updateCriteria('onlyWithPrice', checked as boolean)
             }
           />
-          <Label htmlFor="onlyWithPrice" className="text-sm text-slate-400">
+          <Label htmlFor="onlyWithPrice" className={`text-sm ${mutedLabelClass}`}>
             Only listings with price
           </Label>
         </div>
@@ -226,7 +240,7 @@ export function CriteriaForm({
       {/* Rooms */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-slate-300">Rooms</Label>
+          <Label className={labelClass}>Rooms</Label>
           {showWeights && (
             <WeightSelector
               value={weights.roomsTo}
@@ -247,7 +261,7 @@ export function CriteriaForm({
             onChange={(e) =>
               updateCriteria('roomsFrom', e.target.value ? Number(e.target.value) : undefined)
             }
-            className="bg-slate-800/50 border-slate-700 text-white"
+            className={inputClass}
           />
           <Input
             type="number"
@@ -258,7 +272,7 @@ export function CriteriaForm({
             onChange={(e) =>
               updateCriteria('roomsTo', e.target.value ? Number(e.target.value) : undefined)
             }
-            className="bg-slate-800/50 border-slate-700 text-white"
+            className={inputClass}
           />
         </div>
       </div>
@@ -266,7 +280,7 @@ export function CriteriaForm({
       {/* Living Space */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-slate-300">Living Space (m²)</Label>
+          <Label className={labelClass}>Living Space (m²)</Label>
           {showWeights && (
             <WeightSelector
               value={weights.livingSpaceTo}
@@ -289,7 +303,7 @@ export function CriteriaForm({
                 e.target.value ? Number(e.target.value) : undefined
               )
             }
-            className="bg-slate-800/50 border-slate-700 text-white"
+            className={inputClass}
           />
           <Input
             type="number"
@@ -302,15 +316,15 @@ export function CriteriaForm({
                 e.target.value ? Number(e.target.value) : undefined
               )
             }
-            className="bg-slate-800/50 border-slate-700 text-white"
+            className={inputClass}
           />
         </div>
       </div>
 
       {/* Features */}
       <div className="space-y-2">
-        <Label className="text-slate-300">Features & Furnishings</Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
+        <Label className={labelClass}>Features & Furnishings</Label>
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 p-4 rounded-lg border ${featureBoxClass}`}>
           {FEATURES.map((feature) => {
             const isChecked = criteria.features?.includes(feature) || false;
             return (
@@ -326,7 +340,7 @@ export function CriteriaForm({
                   />
                   <Label
                     htmlFor={feature}
-                    className="text-sm text-slate-400 cursor-pointer"
+                    className={`text-sm cursor-pointer ${mutedLabelClass}`}
                   >
                     {FEATURE_LABELS[feature]}
                   </Label>
@@ -345,7 +359,7 @@ export function CriteriaForm({
 
       {/* Free Text */}
       <div className="space-y-2">
-        <Label htmlFor="freeText" className="text-slate-300">
+        <Label htmlFor="freeText" className={labelClass}>
           Free-text Search
         </Label>
         <Input
@@ -353,14 +367,18 @@ export function CriteriaForm({
           placeholder="Additional keywords..."
           value={criteria.freeText || ''}
           onChange={(e) => updateCriteria('freeText', e.target.value)}
-          className="bg-slate-800/50 border-slate-700 text-white"
+          className={inputClass}
         />
       </div>
 
       <Button
         type="submit"
         disabled={loading}
-        className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700"
+        className={`w-full ${
+          hg
+            ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+            : 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700'
+        }`}
       >
         {loading ? 'Saving...' : submitLabel}
       </Button>

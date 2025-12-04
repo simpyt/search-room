@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user has any rooms
-    let redirectTo = '/rooms/new';
+    let redirectTo = '/rooms';
     try {
       const rooms = await getUserRooms(user.id);
       if (rooms.length > 0) {

@@ -17,6 +17,7 @@ import type {
 } from '@/lib/types';
 import { USERS } from '@/lib/types';
 import { toast } from 'sonner';
+import { isHomegateTheme } from '@/lib/theme';
 
 interface SearchResult {
   id: string;
@@ -195,11 +196,12 @@ export function MyView() {
   // Filter favorites to show who added what
   const myFavorites = favorites.filter((f) => f.addedByUserId === user?.id);
   const partnerFavorites = favorites.filter((f) => f.addedByUserId !== user?.id);
+  const hg = isHomegateTheme();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${hg ? 'border-[#e5007d]' : 'border-sky-500'}`} />
       </div>
     );
   }
@@ -215,9 +217,9 @@ export function MyView() {
       />
 
       {/* My Criteria */}
-      <Card className="border-slate-700/50 bg-slate-900/50">
+      <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
-          <CardTitle className="text-white">My Search Criteria</CardTitle>
+          <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Search Criteria</CardTitle>
           <CardDescription>
             Set your preferences and priorities with weights
           </CardDescription>
@@ -235,17 +237,20 @@ export function MyView() {
       </Card>
 
       {/* Personal Search */}
-      <Card className="border-slate-700/50 bg-slate-900/50">
+      <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-white">My Search Results</CardTitle>
+              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Search Results</CardTitle>
               <CardDescription>Results based on your personal criteria</CardDescription>
             </div>
             <Button
               onClick={handleSearchPersonal}
               disabled={searching || !myCriteria}
-              className="bg-sky-600 hover:bg-sky-700"
+              className={hg
+                ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+                : 'bg-sky-600 hover:bg-sky-700'
+              }
             >
               {searching ? 'Searching...' : 'Search with My Criteria'}
             </Button>
@@ -253,7 +258,7 @@ export function MyView() {
         </CardHeader>
         <CardContent>
           {!myCriteria ? (
-            <p className="text-slate-400 text-center py-8">
+            <p className={`text-center py-8 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
               Set your criteria above to search
             </p>
           ) : results.length > 0 ? (
@@ -263,7 +268,7 @@ export function MyView() {
               onPin={handlePinListing}
             />
           ) : (
-            <p className="text-slate-400 text-center py-8">
+            <p className={`text-center py-8 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
               Click &quot;Search with My Criteria&quot; to find properties
             </p>
           )}
@@ -271,9 +276,9 @@ export function MyView() {
       </Card>
 
       {/* My Favorites */}
-      <Card className="border-slate-700/50 bg-slate-900/50">
+      <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
-          <CardTitle className="text-white">My Favorites</CardTitle>
+          <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Favorites</CardTitle>
           <CardDescription>
             {myFavorites.length} {myFavorites.length === 1 ? 'property' : 'properties'} you added
           </CardDescription>
@@ -289,9 +294,9 @@ export function MyView() {
 
       {/* Partner's Favorites */}
       {partnerFavorites.length > 0 && (
-        <Card className="border-slate-700/50 bg-slate-900/50">
+        <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
           <CardHeader>
-            <CardTitle className="text-white">
+            <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>
               {partnerName ? `${partnerName}'s Favorites` : "Partner's Favorites"}
             </CardTitle>
             <CardDescription>

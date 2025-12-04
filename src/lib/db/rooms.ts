@@ -189,6 +189,29 @@ export async function isUserMemberOfRoom(roomId: string, userId: string): Promis
   return !!result.Item;
 }
 
+export async function updateRoom(
+  roomId: string,
+  updates: { name?: string }
+): Promise<Room | null> {
+  const room = await getRoom(roomId);
+  if (!room) return null;
+
+  const updatedRoom = { ...room, ...updates };
+
+  await docClient.send(
+    new PutCommand({
+      TableName: TABLE_NAME,
+      Item: {
+        ...keys.room(roomId),
+        ...updatedRoom,
+        entityType: 'Room',
+      },
+    })
+  );
+
+  return updatedRoom;
+}
+
 export async function deleteRoom(roomId: string): Promise<void> {
   // First get all items for this room
   const items = await docClient.send(

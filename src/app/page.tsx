@@ -19,5 +19,5 @@ export default async function Home() {
     // If DB fails, redirect to create room
   }
 
-  redirect('/rooms/new');
+  redirect('/rooms');
 }

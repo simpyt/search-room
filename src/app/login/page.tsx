@@ -46,7 +46,7 @@ function LoginForm() {
       }
 
       // Redirect to the intended page or the default redirect from the API
-      router.push(redirect || data.redirectTo || '/rooms/new');
+      router.push(redirect || data.redirectTo || '/rooms');
     } catch {
       setError('An unexpected error occurred');
     } finally {
