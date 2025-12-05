@@ -18,11 +18,13 @@ interface ActivityItemProps {
   activity: Activity;
   onArchive?: (activityId: string) => void;
   showArchiveButton?: boolean;
+  currentUserId?: string;
 }
 
-export function ActivityItem({ activity, onArchive, showArchiveButton = true }: ActivityItemProps) {
+export function ActivityItem({ activity, onArchive, showArchiveButton = true, currentUserId }: ActivityItemProps) {
   const [expanded, setExpanded] = useState(false);
   const hg = isHomegateTheme();
+  const isCurrentUser = activity.senderId === currentUserId && activity.senderType === 'user';
 
   const getSenderInfo = () => {
     if (activity.senderType === 'ai_copilot') {
@@ -234,13 +236,17 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true }: 
     <>
       <div
         onClick={isClickable ? () => setExpanded(true) : undefined}
-        className={`flex gap-3 relative group ${
+        className={`flex gap-3 relative group ${isCurrentUser ? 'flex-row-reverse' : ''} ${
           isChat
             ? isAI
               ? hg
                 ? 'bg-emerald-50 -mx-4 px-4 py-3 border-l-2 border-emerald-500 cursor-pointer hover:bg-emerald-100 transition-colors'
                 : 'bg-emerald-500/5 -mx-4 px-4 py-3 border-l-2 border-emerald-500/50 cursor-pointer hover:bg-emerald-500/10 transition-colors'
-              : ''
+              : isCurrentUser
+                ? hg
+                  ? '-mx-4 px-4 py-2'
+                  : '-mx-4 px-4 py-2'
+                : ''
             : 'opacity-75'
         }`}
       >
@@ -249,8 +255,8 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true }: 
             {sender.initial}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+        <div className={`flex-1 min-w-0 ${isCurrentUser ? 'text-right' : ''}`}>
+          <div className={`flex items-center gap-2 mb-1 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
             <span
               className={`text-sm font-medium ${
                 isAI ? (hg ? 'text-emerald-600' : 'text-emerald-400') : hg ? 'text-gray-900' : 'text-white'
@@ -268,14 +274,20 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true }: 
               <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>(click to expand)</span>
             )}
           </div>
-          {renderContent()}
+          {isCurrentUser && isChat ? (
+            <div className={`inline-block rounded-lg px-3 py-2 ${hg ? 'bg-blue-500 text-white' : 'bg-sky-600 text-white'}`}>
+              {renderContent()}
+            </div>
+          ) : (
+            renderContent()
+          )}
         </div>
 
         {/* Archive button - shown on hover */}
         {showArchiveButton && onArchive && (
           <button
             onClick={handleArchive}
-            className={`absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${
+            className={`absolute ${isCurrentUser ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${
               hg
                 ? 'bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm'
                 : 'bg-slate-900 hover:bg-slate-700 text-slate-500 hover:text-slate-300 shadow-sm'

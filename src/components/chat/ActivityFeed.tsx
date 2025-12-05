@@ -25,16 +25,22 @@ interface ActivityFeedProps {
   onAIClick?: () => void;
   initialMessage?: string;
   inSheet?: boolean;
+  currentUserId?: string;
 }
 
-export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, inSheet }: ActivityFeedProps) {
+type ActivityFilter = 'all' | 'chat' | 'status' | 'system';
+
+export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, inSheet, currentUserId }: ActivityFeedProps) {
   const [message, setMessage] = useState(initialMessage || '');
   const [sending, setSending] = useState(false);
   const [waitingForAI, setWaitingForAI] = useState(false);
   const [archiveExpanded, setArchiveExpanded] = useState(false);
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(true);
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
+  const [activeFilter, setActiveFilter] = useState<ActivityFilter>('all');
+  const [aiMode, setAiMode] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const hg = isHomegateTheme();
 
   const scrollToBottom = useCallback(() => {
@@ -64,10 +70,15 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
     return { archivedActivities: archived, activeActivities: active };
   }, [activities, archivedIds]);
 
-  // Auto-scroll to bottom when new activities arrive or waiting for AI
-  useEffect(() => {
-    scrollToBottom();
-  }, [activities, waitingForAI, scrollToBottom]);
+  // Filter active activities based on selected filter
+  const filteredActivities = useMemo(() => {
+    return activeActivities.filter((a) => {
+      if (activeFilter === 'chat') return a.type === 'ChatMessage';
+      if (activeFilter === 'status') return a.type === 'ListingStatusChanged';
+      if (activeFilter === 'system') return a.senderType === 'system';
+      return true;
+    });
+  }, [activeActivities, activeFilter]);
 
   // Update message when initialMessage prop changes
   useEffect(() => {
@@ -80,11 +91,19 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
     setArchivedIds((prev) => new Set([...prev, activityId]));
   };
 
-  const sendMessage = async (msg?: string) => {
-    const messageToSend = msg || message;
-    if (!messageToSend.trim()) return;
+  const handleArchiveAll = () => {
+    const idsToArchive = filteredActivities.map((a) => a.activityId);
+    setArchivedIds((prev) => new Set([...prev, ...idsToArchive]));
+  };
 
-    const isAIMessage = messageToSend.trim().toLowerCase().startsWith('ai');
+  const sendMessage = async (msg?: string) => {
+    const rawMessage = msg || message;
+    if (!rawMessage.trim()) return;
+
+    // If AI mode is on, prepend "AI, " to the message
+    const messageToSend = aiMode ? `AI, ${rawMessage.trim()}` : rawMessage.trim();
+    const isAIMessage = aiMode || messageToSend.toLowerCase().startsWith('ai');
+    
     setSending(true);
     if (isAIMessage) setWaitingForAI(true);
 
@@ -92,7 +111,7 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
       const res = await fetch(`/api/rooms/${roomId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageToSend.trim() }),
+        body: JSON.stringify({ message: messageToSend }),
       });
 
       if (!res.ok) {
@@ -102,6 +121,7 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
       }
 
       setMessage('');
+      setAiMode(false);
       // Scroll to bottom after sending
       setTimeout(scrollToBottom, 100);
     } catch {
@@ -120,7 +140,16 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
   };
 
   const handleSuggestionClick = (prompt: string) => {
-    setMessage(prompt);
+    setAiMode(true);
+    // Strip "AI, " prefix from the prompt since AI mode will add it
+    setMessage(prompt.replace(/^AI,?\s*/i, ''));
+    inputRef.current?.focus();
+  };
+
+  const handleAIButtonClick = () => {
+    setAiMode(true);
+    inputRef.current?.focus();
+    scrollToBottom();
   };
 
   return (
@@ -149,6 +178,58 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
             </div>
             <span className={`text-sm ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>AI Co-pilot</span>
           </button>
+        </div>
+
+        {/* Filter chips and Archive All */}
+        <div className="flex items-center justify-between mt-3 gap-2">
+          <div className="flex gap-1.5 flex-wrap">
+            {(['all', 'chat', 'status', 'system'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                  activeFilter === filter
+                    ? hg
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-slate-900 border-white'
+                    : hg
+                      ? 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
+                }`}
+              >
+                {filter === 'all' && 'All'}
+                {filter === 'chat' && 'Chat'}
+                {filter === 'status' && 'Status'}
+                {filter === 'system' && 'System'}
+              </button>
+            ))}
+          </div>
+          {filteredActivities.length > 0 && (
+            <button
+              onClick={handleArchiveAll}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-all flex items-center gap-1.5 ${
+                hg
+                  ? 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-3 w-3"
+              >
+                <rect width="20" height="5" x="2" y="3" rx="1" />
+                <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+                <path d="M10 12h4" />
+              </svg>
+              Archive All
+            </button>
+          )}
         </div>
       </div>
 
@@ -203,7 +284,7 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
                   <div className="pt-3 space-y-2">
                     {archivedActivities.map((activity) => (
                       <div key={activity.activityId} className="opacity-60">
-                        <ActivityItem activity={activity} showArchiveButton={false} />
+                        <ActivityItem activity={activity} showArchiveButton={false} currentUserId={currentUserId} />
                       </div>
                     ))}
                   </div>
@@ -213,7 +294,7 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
           )}
 
           {/* Active activities */}
-          {activeActivities.length === 0 && archivedActivities.length === 0 ? (
+          {filteredActivities.length === 0 && archivedActivities.length === 0 ? (
             <div className={`text-center py-8 ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -230,10 +311,14 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
               <p>No activity yet</p>
               <p className="text-xs mt-1">Start a conversation or make changes</p>
             </div>
+          ) : filteredActivities.length === 0 ? (
+            <div className={`text-center py-8 ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
+              <p className="text-sm">No activities match this filter</p>
+            </div>
           ) : (
             <>
-              {activeActivities.map((activity) => (
-                <ActivityItem key={activity.activityId} activity={activity} onArchive={handleArchive} />
+              {filteredActivities.map((activity) => (
+                <ActivityItem key={activity.activityId} activity={activity} onArchive={handleArchive} currentUserId={currentUserId} />
               ))}
               {waitingForAI && (
                 <div className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -321,6 +406,7 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={scrollToBottom}
             disabled={sending}
             className={
               hg

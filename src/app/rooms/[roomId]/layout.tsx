@@ -483,7 +483,7 @@ export default function RoomLayout({
                 }`}
               >
                 <SheetTitle className="sr-only">Activity Feed</SheetTitle>
-                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} inSheet />
+                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} inSheet currentUserId={user?.id} />
               </SheetContent>
             </Sheet>
             </div>
@@ -501,7 +501,7 @@ export default function RoomLayout({
               ? 'border-gray-200 bg-white'
               : 'border-slate-800 bg-slate-900/30'
           }`}>
-            <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} />
+            <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} currentUserId={user?.id} />
           </aside>
         </div>
 
