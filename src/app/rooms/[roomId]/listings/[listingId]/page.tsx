@@ -74,11 +74,37 @@ export default function ListingDetailPage() {
     if (!listing) return;
 
     setUpdating(true);
+
+    let visitPlannedAt: string | null | undefined = undefined;
+
+    if (newStatus === 'VISIT_PLANNED') {
+      const input = window.prompt(
+        'When is the visit planned? Please enter date and time (e.g. 2024-06-15 14:30)'
+      );
+
+      if (!input) {
+        setUpdating(false);
+        toast.info('Visit date was not saved');
+        return;
+      }
+
+      const parsedDate = new Date(input);
+      if (isNaN(parsedDate.getTime())) {
+        setUpdating(false);
+        toast.error('Please enter a valid date and time');
+        return;
+      }
+
+      visitPlannedAt = parsedDate.toISOString();
+    } else if (listing.visitPlannedAt) {
+      visitPlannedAt = null;
+    }
+
     try {
       const res = await fetch(`/api/rooms/${roomId}/listings/${listingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, visitPlannedAt }),
       });
 
       if (!res.ok) {
@@ -98,6 +124,47 @@ export default function ListingDetailPage() {
   };
 
   const hg = isHomegateTheme();
+
+  const downloadVisitCalendarEvent = () => {
+    if (!listing?.visitPlannedAt) return;
+
+    const start = new Date(listing.visitPlannedAt);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+
+    const formatICSDate = (date: Date) =>
+      date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Search Room//EN',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      `UID:${listing.listingId}@search-room`,
+      `DTSTAMP:${formatICSDate(new Date())}`,
+      `DTSTART:${formatICSDate(start)}`,
+      `DTEND:${formatICSDate(end)}`,
+      `SUMMARY:Visit - ${listing.title}`,
+      listing.location ? `LOCATION:${listing.location}` : undefined,
+      listing.externalUrl ? `DESCRIPTION:${listing.externalUrl}` : undefined,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const blob = new Blob([icsContent], {
+      type: 'text/calendar;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${listing.title.replace(/\s+/g, '-')}-visit.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const getBrandColor = (sourceBrand: string | undefined) => {
     switch (sourceBrand) {
@@ -239,6 +306,40 @@ export default function ListingDetailPage() {
               <StatusTimeline currentStatus={listing.status} />
             </CardContent>
           </Card>
+
+          {listing.visitPlannedAt && (
+            <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>Visit</CardTitle>
+                <Badge
+                  variant="outline"
+                  className={`${LISTING_STATUS_COLORS['VISIT_PLANNED']} border-transparent text-white`}
+                >
+                  Visit Planned
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className={hg ? 'text-gray-700' : 'text-slate-300'}>
+                  Scheduled for{' '}
+                  <span className={hg ? 'text-gray-900 font-medium' : 'text-white font-medium'}>
+                    {new Date(listing.visitPlannedAt).toLocaleString()}
+                  </span>
+                </p>
+                <div className="flex gap-3">
+                  <Button onClick={downloadVisitCalendarEvent} variant={hg ? 'default' : 'secondary'}>
+                    Add to calendar
+                  </Button>
+                  {listing.externalUrl && (
+                    <Button asChild variant="outline">
+                      <Link href={listing.externalUrl} target="_blank" rel="noopener noreferrer">
+                        View listing details
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Criteria Conformity */}
           <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>

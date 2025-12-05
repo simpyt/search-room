@@ -6,7 +6,10 @@ import {
   updateListingStatus,
   markListingAsSeen,
 } from '@/lib/db/listings';
-import { logListingStatusChanged } from '@/lib/db/activities';
+import {
+  logListingStatusChanged,
+  logListingVisitScheduled,
+} from '@/lib/db/activities';
 import type { ListingStatus } from '@/lib/types';
 
 type RouteParams = { params: Promise<{ roomId: string; listingId: string }> };
@@ -59,11 +62,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const { status } = body as { status: ListingStatus };
+    const { status, visitPlannedAt } = body as {
+      status: ListingStatus;
+      visitPlannedAt?: string | null;
+    };
 
     if (!status) {
       return NextResponse.json(
         { error: 'Status is required' },
+        { status: 400 }
+      );
+    }
+
+    if (status === 'VISIT_PLANNED' && !visitPlannedAt) {
+      return NextResponse.json(
+        { error: 'Visit date and time are required for planned visits' },
         { status: 400 }
       );
     }
@@ -76,7 +89,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const previousStatus = currentListing.status;
 
-    const listing = await updateListingStatus(roomId, listingId, status);
+    const listing = await updateListingStatus(
+      roomId,
+      listingId,
+      status,
+      visitPlannedAt
+    );
 
     if (!listing) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
@@ -91,6 +109,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       previousStatus,
       status
     );
+
+    if (status === 'VISIT_PLANNED' && visitPlannedAt) {
+      await logListingVisitScheduled(
+        roomId,
+        user.id,
+        listingId,
+        listing.title,
+        visitPlannedAt
+      );
+    }
 
     return NextResponse.json({ listing });
   } catch (error) {

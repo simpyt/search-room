@@ -166,6 +166,20 @@ export async function logListingStatusChanged(
   });
 }
 
+export async function logListingVisitScheduled(
+  roomId: string,
+  userId: string,
+  listingId: string,
+  listingTitle: string,
+  visitPlannedAt: string
+): Promise<Activity> {
+  return createActivity(roomId, 'ListingVisitScheduled', 'user', userId, {
+    listingId,
+    listingTitle,
+    visitPlannedAt,
+  });
+}
+
 export async function logAICriteriaProposed(
   roomId: string,
   criteriaRef: string,

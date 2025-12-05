@@ -63,5 +63,6 @@ export interface Listing {
   addedAt: string;
   status: ListingStatus;
   seenBy: string[];
+  visitPlannedAt?: string | null;
 }
 

@@ -44,13 +44,39 @@ export function FavoritesTable({
   const [updating, setUpdating] = useState<string | null>(null);
   const hg = isHomegateTheme();
 
-  const handleStatusChange = async (listingId: string, newStatus: ListingStatus) => {
-    setUpdating(listingId);
+  const handleStatusChange = async (listing: Listing, newStatus: ListingStatus) => {
+    setUpdating(listing.listingId);
+
+    let visitPlannedAt: string | null | undefined = undefined;
+
+    if (newStatus === 'VISIT_PLANNED') {
+      const input = window.prompt(
+        'When is the visit planned? Please enter date and time (e.g. 2024-06-15 14:30)'
+      );
+
+      if (!input) {
+        setUpdating(null);
+        toast.info('Visit date was not saved');
+        return;
+      }
+
+      const parsedDate = new Date(input);
+      if (isNaN(parsedDate.getTime())) {
+        setUpdating(null);
+        toast.error('Please enter a valid date and time');
+        return;
+      }
+
+      visitPlannedAt = parsedDate.toISOString();
+    } else if (listing.visitPlannedAt) {
+      visitPlannedAt = null;
+    }
+
     try {
-      const res = await fetch(`/api/rooms/${roomId}/listings/${listingId}`, {
+      const res = await fetch(`/api/rooms/${roomId}/listings/${listing.listingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, visitPlannedAt }),
       });
 
       if (!res.ok) {
@@ -164,7 +190,7 @@ export function FavoritesTable({
                   <Select
                     value={listing.status}
                     onValueChange={(v) =>
-                      handleStatusChange(listing.listingId, v as ListingStatus)
+                      handleStatusChange(listing, v as ListingStatus)
                     }
                     disabled={updating === listing.listingId}
                   >

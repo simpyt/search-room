@@ -99,19 +99,30 @@ export async function getRoomListings(
 export async function updateListingStatus(
   roomId: string,
   listingId: string,
-  status: ListingStatus
+  status: ListingStatus,
+  visitPlannedAt?: string | null
 ): Promise<Listing | null> {
+  const updateExpressionParts = ['#status = :status'];
+  const expressionAttributeNames: Record<string, string> = {
+    '#status': 'status',
+  };
+  const expressionAttributeValues: Record<string, ListingStatus | string | null> = {
+    ':status': status,
+  };
+
+  if (visitPlannedAt !== undefined) {
+    updateExpressionParts.push('#visitPlannedAt = :visitPlannedAt');
+    expressionAttributeNames['#visitPlannedAt'] = 'visitPlannedAt';
+    expressionAttributeValues[':visitPlannedAt'] = visitPlannedAt;
+  }
+
   const result = await docClient.send(
     new UpdateCommand({
       TableName: TABLE_NAME,
       Key: keys.listing(roomId, listingId),
-      UpdateExpression: 'SET #status = :status',
-      ExpressionAttributeNames: {
-        '#status': 'status',
-      },
-      ExpressionAttributeValues: {
-        ':status': status,
-      },
+      UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
       ReturnValues: 'ALL_NEW',
     })
   );
