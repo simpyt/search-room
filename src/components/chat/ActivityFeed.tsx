@@ -516,7 +516,7 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
         </div>
         {!aiMode && (
           <p className={`text-xs mt-2 ${hg ? 'text-gray-500' : 'text-slate-500'}`}>
-            Tip: Start with &quot;AI,&quot; to ask the AI Co-pilot for help
+            Tip: Select &ldquo;AI Co-pilot&ldquo; to chat directly with your AI assistant
           </p>
         )}
       </div>
