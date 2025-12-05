@@ -10,14 +10,14 @@ export const USERS: Record<string, User & { password: string }> = {
     id: 'pierre',
     email: 'pierre@example.com',
     name: 'Pierre',
-    password: 'pierre123',
+    password: 'P13rr3$2024!DemoSecure',
     avatarColor: '#3B82F6', // blue
   },
   marie: {
     id: 'marie',
     email: 'marie@example.com',
     name: 'Marie',
-    password: 'marie123',
+    password: 'M4r13$2024!DemoSecure',
     avatarColor: '#EC4899', // pink
   },
 };

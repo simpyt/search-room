@@ -82,8 +82,8 @@ Focus of POC:
 * Email + password fields.
 * Two valid credentials:
 
-  * `pierre@example.com` / `pierre123`
-  * `marie@example.com` / `marie123`
+  * `pierre@example.com` / `P13rr3$2024!DemoSecure`
+  * `marie@example.com` / `M4r13$2024!DemoSecure`
 * On successful login:
 
   * Set `sr_session=<userId>` cookie.

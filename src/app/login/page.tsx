@@ -192,7 +192,7 @@ function LoginForm() {
                 ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 : 'border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700 hover:text-white'
             }`}
-            onClick={() => handleQuickLogin('pierre@example.com', 'pierre123')}
+            onClick={() => handleQuickLogin('pierre@example.com', 'P13rr3$2024!DemoSecure')}
           >
             <span
               className="w-2 h-2 rounded-full mr-2"
@@ -208,7 +208,7 @@ function LoginForm() {
                 ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 : 'border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700 hover:text-white'
             }`}
-            onClick={() => handleQuickLogin('marie@example.com', 'marie123')}
+            onClick={() => handleQuickLogin('marie@example.com', 'M4r13$2024!DemoSecure')}
           >
             <span
               className="w-2 h-2 rounded-full mr-2"

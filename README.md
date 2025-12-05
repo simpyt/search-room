@@ -102,8 +102,8 @@ All AI calls use `response_format: { type: 'json_object' }` for reliable structu
 
 ### Demo Credentials
 
-- Pierre: `pierre@example.com` / `pierre123`
-- Marie: `marie@example.com` / `marie123`
+- Pierre: `pierre@example.com` / `P13rr3$2024!DemoSecure`
+- Marie: `marie@example.com` / `M4r13$2024!DemoSecure`
 
 ### Available Scripts
 
