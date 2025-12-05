@@ -7,6 +7,7 @@ export const ACTIVITY_TYPES = [
   'CompatibilityComputed',
   'ListingPinned',
   'ListingStatusChanged',
+  'ListingVisitScheduled',
   'AICriteriaProposed',
   'AICompromiseProposed',
 ] as const;
@@ -72,6 +73,13 @@ export interface ListingStatusChangedActivity extends BaseActivity {
   toStatus: string;
 }
 
+export interface ListingVisitScheduledActivity extends BaseActivity {
+  type: 'ListingVisitScheduled';
+  listingId: string;
+  listingTitle: string;
+  visitPlannedAt: string;
+}
+
 export interface AICriteriaProposedActivity extends BaseActivity {
   type: 'AICriteriaProposed';
   criteriaRef: string;
@@ -93,6 +101,7 @@ export type Activity =
   | CompatibilityComputedActivity
   | ListingPinnedActivity
   | ListingStatusChangedActivity
+  | ListingVisitScheduledActivity
   | AICriteriaProposedActivity
   | AICompromiseProposedActivity;
 

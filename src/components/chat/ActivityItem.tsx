@@ -131,6 +131,17 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true }: 
           </p>
         );
 
+      case 'ListingVisitScheduled':
+        return (
+          <p className={`${mutedClass} text-sm`}>
+            Planned a visit for{' '}
+            <span className={highlightClass}>{activity.listingTitle}</span> on{' '}
+            <span className={highlightClass}>
+              {new Date(activity.visitPlannedAt).toLocaleString()}
+            </span>
+          </p>
+        );
+
       case 'AICriteriaProposed':
         return (
           <div className={`${mutedClass} text-sm`}>
