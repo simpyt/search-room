@@ -20,15 +20,76 @@ export default function LivingRules({
     <article className={`${isFullPage ? 'max-w-2xl mx-auto' : ''}`}>
       {/* Header */}
       <header className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-2xl">📋</span>
-          <span
-            className={`text-sm font-medium px-2 py-1 rounded-full ${
-              hg ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/20 text-blue-400'
-            }`}
-          >
-            Agreements
-          </span>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">📋</span>
+            <span
+              className={`text-sm font-medium px-2 py-1 rounded-full ${
+                hg ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/20 text-blue-400'
+              }`}
+            >
+              Agreements
+            </span>
+          </div>
+          {!isFullPage && (onOpenFullPage || onClose) && (
+            <div className="flex items-center gap-2">
+              {onOpenFullPage && (
+                <Button
+                  onClick={onOpenFullPage}
+                  variant="outline"
+                  size="sm"
+                  className={
+                    hg
+                      ? 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                      : 'border-slate-600 text-slate-300 hover:bg-slate-800'
+                  }
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 mr-1.5"
+                  >
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" x2="21" y1="14" y2="3" />
+                  </svg>
+                  Open Full Page
+                </Button>
+              )}
+              {onClose && (
+                <Button
+                  onClick={onClose}
+                  variant="outline"
+                  size="sm"
+                  className={
+                    hg
+                      ? 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                      : 'border-slate-600 text-slate-300 hover:bg-slate-800'
+                  }
+                >
+                  Close
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 ml-1"
+                  >
+                    <line x1="18" x2="6" y1="6" y2="18" />
+                    <line x1="6" x2="18" y1="6" y2="18" />
+                  </svg>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
         <h1
           className={`text-2xl md:text-3xl font-bold mb-3 ${
@@ -220,48 +281,6 @@ export default function LivingRules({
         </section>
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-wrap gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-slate-700">
-        {!isFullPage && onOpenFullPage && (
-          <Button
-            onClick={onOpenFullPage}
-            variant="outline"
-            className={
-              hg
-                ? 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                : 'border-slate-600 text-slate-300 hover:bg-slate-800'
-            }
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4 mr-2"
-            >
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" x2="21" y1="14" y2="3" />
-            </svg>
-            Open Full Page
-          </Button>
-        )}
-        {onClose && (
-          <Button
-            onClick={onClose}
-            className={
-              hg
-                ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
-                : 'bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white'
-            }
-          >
-            Done Reading
-          </Button>
-        )}
-      </div>
     </article>
   );
 }
