@@ -9,10 +9,102 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatDistanceToNow } from 'date-fns';
-import type { Activity } from '@/lib/types';
+import {
+  SlidersHorizontal,
+  Search,
+  Heart,
+  ArrowRightLeft,
+  Sparkles,
+  Users,
+  Home,
+  BarChart3,
+  Calendar,
+  Lightbulb,
+  Archive,
+} from 'lucide-react';
+import type { Activity, ActivityType } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
 import { isHomegateTheme } from '@/lib/theme';
+
+// Compact time formatting: "now", "5m", "2h", "3d", or "Dec 5"
+function formatCompactTime(date: Date): string {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Activity type configuration for icons, colors, and labels (Homegate theme)
+const ACTIVITY_TYPE_CONFIG: Record<
+  Exclude<ActivityType, 'ChatMessage'>,
+  { icon: React.ReactNode; bgClass: string; iconColor: string; label: string }
+> = {
+  RoomCreated: {
+    icon: <Home className="h-3.5 w-3.5" />,
+    bgClass: 'bg-slate-50',
+    iconColor: 'text-slate-500',
+    label: 'Room Created',
+  },
+  MemberJoined: {
+    icon: <Users className="h-3.5 w-3.5" />,
+    bgClass: 'bg-indigo-50',
+    iconColor: 'text-indigo-500',
+    label: 'Member Joined',
+  },
+  CriteriaUpdated: {
+    icon: <SlidersHorizontal className="h-3.5 w-3.5" />,
+    bgClass: 'bg-blue-50',
+    iconColor: 'text-blue-500',
+    label: 'Criteria Updated',
+  },
+  SearchExecuted: {
+    icon: <Search className="h-3.5 w-3.5" />,
+    bgClass: 'bg-violet-50',
+    iconColor: 'text-violet-500',
+    label: 'Search Executed',
+  },
+  CompatibilityComputed: {
+    icon: <BarChart3 className="h-3.5 w-3.5" />,
+    bgClass: 'bg-cyan-50',
+    iconColor: 'text-cyan-500',
+    label: 'Compatibility',
+  },
+  ListingPinned: {
+    icon: <Heart className="h-3.5 w-3.5" />,
+    bgClass: 'bg-pink-50',
+    iconColor: 'text-pink-500',
+    label: 'Listing Pinned',
+  },
+  ListingStatusChanged: {
+    icon: <ArrowRightLeft className="h-3.5 w-3.5" />,
+    bgClass: 'bg-amber-50',
+    iconColor: 'text-amber-500',
+    label: 'Listing Status Changed',
+  },
+  ListingVisitScheduled: {
+    icon: <Calendar className="h-3.5 w-3.5" />,
+    bgClass: 'bg-teal-50',
+    iconColor: 'text-teal-500',
+    label: 'Visit Scheduled',
+  },
+  AICriteriaProposed: {
+    icon: <Sparkles className="h-3.5 w-3.5" />,
+    bgClass: 'bg-emerald-50',
+    iconColor: 'text-emerald-500',
+    label: 'AI Criteria Proposed',
+  },
+  AICompromiseProposed: {
+    icon: <Lightbulb className="h-3.5 w-3.5" />,
+    bgClass: 'bg-emerald-50',
+    iconColor: 'text-emerald-500',
+    label: 'AI Compromise',
+  },
+};
 
 interface ActivityItemProps {
   activity: Activity;
@@ -50,9 +142,7 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
   };
 
   const sender = getSenderInfo();
-  const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
-    addSuffix: true,
-  });
+  const timeAgo = formatCompactTime(new Date(activity.createdAt));
 
   const renderContent = () => {
     const textClass = hg ? 'text-gray-600' : 'text-slate-300';
@@ -226,6 +316,40 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
               <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
               <path d="M10 12h4" />
             </svg>
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Non-chat activities with icons and colored backgrounds (Homegate theme only)
+  if (!isChat && hg) {
+    const config = ACTIVITY_TYPE_CONFIG[activity.type as Exclude<ActivityType, 'ChatMessage'>];
+    return (
+      <div className={`flex gap-3 p-3 rounded-lg relative group ${config.bgClass}`}>
+        <div
+          className={`h-8 w-8 flex-shrink-0 rounded-full bg-white flex items-center justify-center shadow-sm ${config.iconColor}`}
+        >
+          {config.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+            <span className="font-medium text-gray-700">{config.label}</span>
+            <span>·</span>
+            <span>{sender.name}</span>
+            <span>·</span>
+            <span>{timeAgo}</span>
+          </div>
+          <div className="text-sm">{renderContent()}</div>
+        </div>
+        {/* Archive button - shown on hover */}
+        {showArchiveButton && onArchive && (
+          <button
+            onClick={handleArchive}
+            className="absolute right-2 top-2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm"
+            title="Archive"
+          >
+            <Archive className="h-3.5 w-3.5" />
           </button>
         )}
       </div>

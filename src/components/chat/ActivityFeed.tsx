@@ -30,18 +30,42 @@ interface ActivityFeedProps {
 
 type ActivityFilter = 'all' | 'chat' | 'status' | 'system';
 
+const ARCHIVED_STORAGE_KEY = (roomId: string) => `sr_archived_activities_${roomId}`;
+
 export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, inSheet, currentUserId }: ActivityFeedProps) {
   const [message, setMessage] = useState(initialMessage || '');
   const [sending, setSending] = useState(false);
   const [waitingForAI, setWaitingForAI] = useState(false);
   const [archiveExpanded, setArchiveExpanded] = useState(false);
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(true);
-  const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
+  const [archivedIds, setArchivedIds] = useState<Set<string>>(() => {
+    // Initialize from localStorage on client
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(ARCHIVED_STORAGE_KEY(roomId));
+      if (stored) {
+        try {
+          return new Set(JSON.parse(stored));
+        } catch {
+          return new Set();
+        }
+      }
+    }
+    return new Set();
+  });
   const [activeFilter, setActiveFilter] = useState<ActivityFilter>('all');
   const [aiMode, setAiMode] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hg = isHomegateTheme();
+
+  // Persist archived IDs to localStorage
+  useEffect(() => {
+    if (archivedIds.size > 0) {
+      localStorage.setItem(ARCHIVED_STORAGE_KEY(roomId), JSON.stringify([...archivedIds]));
+    } else {
+      localStorage.removeItem(ARCHIVED_STORAGE_KEY(roomId));
+    }
+  }, [archivedIds, roomId]);
 
   const scrollToBottom = useCallback(() => {
     const viewport = scrollAreaRef.current?.querySelector('[data-slot="scroll-area-viewport"]');
@@ -79,6 +103,36 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
       return true;
     });
   }, [activeActivities, activeFilter]);
+
+  // Group activities by date for day separators (Homegate theme only)
+  const groupedActivities = useMemo(() => {
+    const groups: { date: string; label: string; activities: Activity[] }[] = [];
+    let currentDate = '';
+
+    for (const activity of filteredActivities) {
+      const actDate = new Date(activity.createdAt);
+      const dateKey = actDate.toDateString();
+      const today = new Date();
+      const yesterday = new Date(Date.now() - 86400000);
+
+      const isToday = dateKey === today.toDateString();
+      const isYesterday = dateKey === yesterday.toDateString();
+
+      const label = isToday
+        ? 'Today'
+        : isYesterday
+          ? 'Yesterday'
+          : actDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+      if (dateKey !== currentDate) {
+        groups.push({ date: dateKey, label, activities: [activity] });
+        currentDate = dateKey;
+      } else {
+        groups[groups.length - 1].activities.push(activity);
+      }
+    }
+    return groups;
+  }, [filteredActivities]);
 
   // Update message when initialMessage prop changes
   useEffect(() => {
@@ -315,8 +369,60 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
             <div className={`text-center py-8 ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
               <p className="text-sm">No activities match this filter</p>
             </div>
+          ) : hg ? (
+            <>
+              {/* Homegate theme: grouped by date with separators */}
+              {groupedActivities.map((group) => (
+                <div key={group.date}>
+                  <div className="flex items-center gap-3 py-3">
+                    <div className="h-px flex-1 bg-gray-200" />
+                    <span className="text-xs text-gray-400 font-medium px-1">{group.label}</span>
+                    <div className="h-px flex-1 bg-gray-200" />
+                  </div>
+                  <div className="space-y-4">
+                    {group.activities.map((activity) => (
+                      <ActivityItem
+                        key={activity.activityId}
+                        activity={activity}
+                        onArchive={handleArchive}
+                        currentUserId={currentUserId}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {waitingForAI && (
+                <div className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: AI_COPILOT.avatarColor }}
+                  >
+                    <span className="text-white font-semibold text-xs">AI</span>
+                  </div>
+                  <div className="flex-1 rounded-lg px-3 py-2 bg-gray-100">
+                    <div className="text-xs font-medium mb-1 text-green-600">AI Co-pilot</div>
+                    <div className="flex items-center gap-1">
+                      <span
+                        className="inline-block w-2 h-2 rounded-full animate-bounce bg-gray-400"
+                        style={{ animationDelay: '0ms' }}
+                      />
+                      <span
+                        className="inline-block w-2 h-2 rounded-full animate-bounce bg-gray-400"
+                        style={{ animationDelay: '150ms' }}
+                      />
+                      <span
+                        className="inline-block w-2 h-2 rounded-full animate-bounce bg-gray-400"
+                        style={{ animationDelay: '300ms' }}
+                      />
+                      <span className="ml-2 text-sm text-gray-500">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <>
+              {/* Default theme: flat list */}
               {filteredActivities.map((activity) => (
                 <ActivityItem key={activity.activityId} activity={activity} onArchive={handleArchive} currentUserId={currentUserId} />
               ))}
