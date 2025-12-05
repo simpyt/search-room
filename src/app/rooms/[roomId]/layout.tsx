@@ -24,6 +24,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ActivityFeed } from '@/components/chat/ActivityFeed';
+import DocumentManager from '@/components/documents/DocumentManager';
 import type { RoomWithMembers, User, Activity, RoomContext } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
 import { isHomegateTheme } from '@/lib/theme';
@@ -62,6 +63,7 @@ export default function RoomLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [documentManagerOpen, setDocumentManagerOpen] = useState(false);
   const [contextDialogOpen, setContextDialogOpen] = useState(false);
   const [contextDescription, setContextDescription] = useState('');
   const [contextSaving, setContextSaving] = useState(false);
@@ -358,6 +360,24 @@ export default function RoomLayout({
                       <path d="M12 5v14" />
                     </svg>
                     Create New Room
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDocumentManagerOpen(true)}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path d="M4 13a4 4 0 0 1 4-4h12" />
+                      <path d="M4 17a4 4 0 0 0 4 4h12" />
+                      <path d="M8 9h12a4 4 0 0 1 0 8H8" />
+                      <path d="M8 5h12" />
+                    </svg>
+                    Document Manager
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={openContextDialog}>
                     <svg
@@ -772,6 +792,10 @@ export default function RoomLayout({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <DocumentManager
+          open={documentManagerOpen}
+          onOpenChange={setDocumentManagerOpen}
+        />
       </div>
     </RoomContext.Provider>
   );

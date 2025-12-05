@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import DocumentManager from '@/components/documents/DocumentManager';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ export default function RoomsPage() {
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [documentManagerOpen, setDocumentManagerOpen] = useState(false);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -373,6 +375,31 @@ export default function RoomsPage() {
                     <circle cx="12" cy="7" r="4" />
                   </svg>
                   Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setDocumentManagerOpen(true)}
+                  className={`cursor-pointer ${
+                    hg
+                      ? 'text-gray-700 focus:bg-gray-100 focus:text-gray-900'
+                      : 'text-slate-300 focus:bg-slate-800 focus:text-white'
+                  }`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 mr-2"
+                  >
+                    <path d="M4 13a4 4 0 0 1 4-4h12" />
+                    <path d="M4 17a4 4 0 0 0 4 4h12" />
+                    <path d="M8 9h12a4 4 0 0 1 0 8H8" />
+                    <path d="M8 5h12" />
+                  </svg>
+                  Document Manager
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className={hg ? 'bg-gray-200' : 'bg-slate-700'} />
                 <DropdownMenuItem
@@ -756,6 +783,7 @@ export default function RoomsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <DocumentManager open={documentManagerOpen} onOpenChange={setDocumentManagerOpen} />
     </div>
   );
 }
