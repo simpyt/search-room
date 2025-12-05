@@ -99,11 +99,7 @@ export default function ArticlePage() {
           <Button
             variant="ghost"
             onClick={() => router.push('/rooms')}
-            className={
-              hg
-                ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }
+            className={hg ? 'text-gray-600 hover:text-gray-900' : 'text-slate-400 hover:text-white'}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
