@@ -24,7 +24,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ActivityFeed } from '@/components/chat/ActivityFeed';
-import DocumentManager from '@/components/documents/DocumentManager';
 import type { RoomWithMembers, User, Activity, RoomContext } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
 import { isHomegateTheme } from '@/lib/theme';
@@ -35,6 +34,14 @@ interface RoomContextValue {
   activities: Activity[];
   refreshRoom: () => Promise<void>;
   refreshActivities: () => Promise<void>;
+}
+
+export interface ListingContext {
+  listingId: string;
+  title: string;
+  price?: number;
+  location: string;
+  imageUrl?: string;
 }
 
 const RoomContext = createContext<RoomContextValue>({
@@ -63,11 +70,11 @@ export default function RoomLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
-  const [documentManagerOpen, setDocumentManagerOpen] = useState(false);
   const [contextDialogOpen, setContextDialogOpen] = useState(false);
   const [contextDescription, setContextDescription] = useState('');
   const [contextSaving, setContextSaving] = useState(false);
   const [chatInitialMessage, setChatInitialMessage] = useState('');
+  const [listingContext, setListingContext] = useState<ListingContext | null>(null);
 
   const fetchRoom = async () => {
     try {
@@ -127,12 +134,31 @@ export default function RoomLayout({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
-  // Handle discuss query param from listing detail page
+  // Handle discussListing query param from listing detail page
   useEffect(() => {
-    const discussTitle = searchParams.get('discuss');
-    if (discussTitle) {
-      setChatInitialMessage(`Let's discuss: ${discussTitle}`);
-      setSidebarOpen(true);
+    const discussListingId = searchParams.get('discussListing');
+    if (discussListingId) {
+      // Fetch listing data and set context
+      const fetchListing = async () => {
+        try {
+          const res = await fetch(`/api/rooms/${roomId}/listings/${discussListingId}`);
+          if (res.ok) {
+            const data = await res.json();
+            const listing = data.listing;
+            setListingContext({
+              listingId: listing.listingId,
+              title: listing.title,
+              price: listing.price,
+              location: listing.location,
+              imageUrl: listing.imageUrl,
+            });
+            setSidebarOpen(true);
+          }
+        } catch (error) {
+          console.error('Failed to fetch listing for chat:', error);
+        }
+      };
+      fetchListing();
       // Clear the query param from URL without navigation
       router.replace(`/rooms/${roomId}`, { scroll: false });
     }
@@ -361,7 +387,7 @@ export default function RoomLayout({
                     </svg>
                     Create New Room
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDocumentManagerOpen(true)}>
+                  <DropdownMenuItem onClick={() => router.push('/documents')}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -483,7 +509,7 @@ export default function RoomLayout({
                 }`}
               >
                 <SheetTitle className="sr-only">Activity Feed</SheetTitle>
-                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} inSheet currentUserId={user?.id} />
+                <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} inSheet currentUserId={user?.id} listingContext={listingContext} onClearListingContext={() => setListingContext(null)} />
               </SheetContent>
             </Sheet>
             </div>
@@ -501,7 +527,7 @@ export default function RoomLayout({
               ? 'border-gray-200 bg-white'
               : 'border-slate-800 bg-slate-900/30'
           }`}>
-            <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} currentUserId={user?.id} />
+            <ActivityFeed roomId={roomId} activities={activities} onAIClick={() => setAiDialogOpen(true)} initialMessage={chatInitialMessage} currentUserId={user?.id} listingContext={listingContext} onClearListingContext={() => setListingContext(null)} />
           </aside>
         </div>
 
@@ -792,10 +818,6 @@ export default function RoomLayout({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <DocumentManager
-          open={documentManagerOpen}
-          onOpenChange={setDocumentManagerOpen}
-        />
       </div>
     </RoomContext.Provider>
   );

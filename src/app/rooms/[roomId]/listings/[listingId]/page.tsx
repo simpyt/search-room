@@ -468,7 +468,7 @@ export default function ListingDetailPage() {
               <Button
                 variant="outline"
                 className={`w-full ${hg ? 'border-gray-300 hover:bg-gray-50' : 'border-slate-700 hover:bg-slate-800'}`}
-                onClick={() => router.push(`/rooms/${roomId}?discuss=${encodeURIComponent(listing.title)}`)}
+                onClick={() => router.push(`/rooms/${roomId}?discussListing=${listingId}`)}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import DocumentManager from '@/components/documents/DocumentManager';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -51,7 +50,6 @@ export default function RoomsPage() {
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [documentManagerOpen, setDocumentManagerOpen] = useState(false);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -378,7 +376,7 @@ export default function RoomsPage() {
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setDocumentManagerOpen(true)}
+                  onClick={() => router.push('/documents')}
                   className={`cursor-pointer ${
                     hg
                       ? 'text-gray-700 focus:bg-gray-100 focus:text-gray-900'
@@ -811,7 +809,6 @@ export default function RoomsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <DocumentManager open={documentManagerOpen} onOpenChange={setDocumentManagerOpen} />
     </div>
   );
 }
