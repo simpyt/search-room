@@ -163,7 +163,7 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
           </div>
           {/* AI Co-pilot button */}
           <button
-            onClick={onAIClick}
+            onClick={handleAIButtonClick}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all hover:scale-105 cursor-pointer ${
               hg
                 ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
@@ -400,25 +400,73 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
           )}
         </div>
 
+        {/* AI Mode indicator */}
+        {aiMode && (
+          <div className={`flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg ${
+            hg ? 'bg-emerald-50' : 'bg-emerald-500/10'
+          }`}>
+            <div
+              className="flex h-5 w-5 items-center justify-center rounded-full"
+              style={{ backgroundColor: AI_COPILOT.avatarColor }}
+            >
+              <span className="text-white font-semibold text-[8px]">AI</span>
+            </div>
+            <span className={`text-xs font-medium flex-1 ${hg ? 'text-emerald-700' : 'text-emerald-400'}`}>
+              AI mode - Your message will be sent to the AI Co-pilot
+            </span>
+            <button
+              onClick={() => setAiMode(false)}
+              className={`p-0.5 rounded hover:bg-emerald-200/50 transition-colors ${
+                hg ? 'text-emerald-600' : 'text-emerald-400'
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Input
-            placeholder="Type a message or ask AI..."
+            ref={inputRef}
+            placeholder={aiMode ? 'Ask the AI Co-pilot...' : 'Type a message or ask AI...'}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={scrollToBottom}
             disabled={sending}
             className={
-              hg
-                ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
-                : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
+              aiMode
+                ? hg
+                  ? 'bg-white border-emerald-400 text-gray-900 placeholder:text-emerald-600/60 ring-1 ring-emerald-400'
+                  : 'bg-slate-800/50 border-emerald-500 text-white placeholder:text-emerald-400/60 ring-1 ring-emerald-500'
+                : hg
+                  ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                  : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
             }
           />
           <Button
             onClick={() => sendMessage()}
             disabled={!message.trim() || sending}
             size="icon"
-            className={hg ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white' : 'bg-sky-600 hover:bg-sky-700'}
+            className={
+              aiMode
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                : hg
+                  ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+                  : 'bg-sky-600 hover:bg-sky-700'
+            }
           >
             {sending ? (
               <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -442,9 +490,11 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
             )}
           </Button>
         </div>
-        <p className={`text-xs mt-2 ${hg ? 'text-gray-500' : 'text-slate-500'}`}>
-          Tip: Start with &quot;AI,&quot; to ask the AI Co-pilot for help
-        </p>
+        {!aiMode && (
+          <p className={`text-xs mt-2 ${hg ? 'text-gray-500' : 'text-slate-500'}`}>
+            Tip: Start with &quot;AI,&quot; to ask the AI Co-pilot for help
+          </p>
+        )}
       </div>
     </div>
   );
