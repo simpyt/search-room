@@ -153,6 +153,7 @@ export default function ResourcesSection() {
       {/* Quiz Modal */}
       <Dialog open={openModal === 'quiz'} onOpenChange={() => setOpenModal(null)}>
         <DialogContent
+          showCloseButton={false}
           className={`max-w-2xl max-h-[90vh] p-0 overflow-hidden ${
             hg ? 'bg-white' : 'bg-slate-900 border-slate-700'
           }`}
@@ -174,6 +175,7 @@ export default function ResourcesSection() {
           onOpenChange={() => setOpenModal(null)}
         >
           <DialogContent
+            showCloseButton={false}
             className={`max-w-2xl max-h-[90vh] p-0 overflow-hidden ${
               hg ? 'bg-white' : 'bg-slate-900 border-slate-700'
             }`}

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ActivityItem } from './ActivityItem';
 import { GroupedActivityItem, groupActivities } from './GroupedActivityItem';
 import type { Activity } from '@/lib/types';
+import type { ListingContext } from '@/app/rooms/[roomId]/layout';
 import { toast } from 'sonner';
 import { isHomegateTheme } from '@/lib/theme';
 
@@ -27,13 +28,15 @@ interface ActivityFeedProps {
   initialMessage?: string;
   inSheet?: boolean;
   currentUserId?: string;
+  listingContext?: ListingContext | null;
+  onClearListingContext?: () => void;
 }
 
 type ActivityFilter = 'all' | 'chat' | 'ai' | 'status' | 'system';
 
 const ARCHIVED_STORAGE_KEY = (roomId: string) => `sr_archived_activities_${roomId}`;
 
-export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, inSheet, currentUserId }: ActivityFeedProps) {
+export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, inSheet, currentUserId, listingContext, onClearListingContext }: ActivityFeedProps) {
   const [message, setMessage] = useState(initialMessage || '');
   const [sending, setSending] = useState(false);
   const [waitingForAI, setWaitingForAI] = useState(false);
@@ -152,8 +155,15 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
     const rawMessage = msg || message;
     if (!rawMessage.trim()) return;
 
+    // Build the message with optional listing context prefix
+    let baseMessage = rawMessage.trim();
+    if (listingContext) {
+      const contextPrefix = `[Re: ${listingContext.title}${listingContext.location ? ` in ${listingContext.location}` : ''}]`;
+      baseMessage = `${contextPrefix} ${baseMessage}`;
+    }
+
     // If AI mode is on, prepend "AI, " to the message
-    const messageToSend = aiMode ? `AI, ${rawMessage.trim()}` : rawMessage.trim();
+    const messageToSend = aiMode ? `AI, ${baseMessage}` : baseMessage;
     const isAIMessage = aiMode || messageToSend.toLowerCase().startsWith('ai');
     
     setSending(true);
@@ -163,7 +173,10 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
       const res = await fetch(`/api/rooms/${roomId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageToSend }),
+        body: JSON.stringify({ 
+          message: messageToSend,
+          listingContext: listingContext || undefined,
+        }),
       });
 
       if (!res.ok) {
@@ -174,6 +187,10 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
 
       setMessage('');
       setAiMode(false);
+      // Clear listing context after sending
+      if (listingContext && onClearListingContext) {
+        onClearListingContext();
+      }
       // Scroll to bottom after sending
       setTimeout(scrollToBottom, 100);
     } catch {
@@ -498,10 +515,79 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
           </div>
         )}
 
+        {/* Listing Context indicator */}
+        {listingContext && (
+          <div className={`flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg ${
+            hg ? 'bg-blue-50' : 'bg-blue-500/10'
+          }`}>
+            {listingContext.imageUrl && (
+              <img
+                src={listingContext.imageUrl}
+                alt=""
+                className="h-8 w-8 rounded object-cover flex-shrink-0"
+              />
+            )}
+            {!listingContext.imageUrl && (
+              <div className={`flex h-8 w-8 items-center justify-center rounded flex-shrink-0 ${
+                hg ? 'bg-blue-100' : 'bg-blue-500/20'
+              }`}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`h-4 w-4 ${hg ? 'text-blue-600' : 'text-blue-400'}`}
+                >
+                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <span className={`text-xs font-medium block truncate ${hg ? 'text-blue-700' : 'text-blue-400'}`}>
+                Discussing: {listingContext.title}
+              </span>
+              <span className={`text-[10px] block truncate ${hg ? 'text-blue-600' : 'text-blue-400/70'}`}>
+                {listingContext.location}
+                {listingContext.price && ` · CHF ${listingContext.price.toLocaleString()}`}
+              </span>
+            </div>
+            <button
+              onClick={onClearListingContext}
+              className={`p-0.5 rounded hover:bg-blue-200/50 transition-colors flex-shrink-0 ${
+                hg ? 'text-blue-600' : 'text-blue-400'
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Input
             ref={inputRef}
-            placeholder={aiMode ? 'Ask the AI Co-pilot...' : 'Type a message or ask AI...'}
+            placeholder={
+              aiMode 
+                ? 'Ask the AI Co-pilot...' 
+                : listingContext 
+                  ? `Discuss ${listingContext.title}...`
+                  : 'Type a message or ask AI...'
+            }
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -512,9 +598,13 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
                 ? hg
                   ? 'bg-white border-emerald-400 text-gray-900 placeholder:text-emerald-600/60 ring-1 ring-emerald-400'
                   : 'bg-slate-800/50 border-emerald-500 text-white placeholder:text-emerald-400/60 ring-1 ring-emerald-500'
-                : hg
-                  ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
-                  : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
+                : listingContext
+                  ? hg
+                    ? 'bg-white border-blue-400 text-gray-900 placeholder:text-blue-600/60 ring-1 ring-blue-400'
+                    : 'bg-slate-800/50 border-blue-500 text-white placeholder:text-blue-400/60 ring-1 ring-blue-500'
+                  : hg
+                    ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                    : 'bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500'
             }
           />
           <Button
@@ -524,9 +614,11 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
             className={
               aiMode
                 ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                : hg
-                  ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
-                  : 'bg-sky-600 hover:bg-sky-700'
+                : listingContext
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : hg
+                    ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
+                    : 'bg-sky-600 hover:bg-sky-700'
             }
           >
             {sending ? (
