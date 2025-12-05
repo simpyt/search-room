@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useRoom } from '@/app/rooms/[roomId]/RoomContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,11 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { CriteriaDiff } from '@/components/criteria/CriteriaDiff';
 import { CompatibilityCard } from '@/components/compatibility/CompatibilityCard';
 import { ResultsGrid } from '@/components/listings/ResultsGrid';
 import { FavoritesTable } from '@/components/listings/FavoritesTable';
 import { FavoritesGrid } from '@/components/listings/FavoritesGrid';
+import { AddFromUrlModal, SearchExplainerModal } from '@/components/favorites';
 import type {
   UserCriteria,
   CombinedCriteria,
@@ -39,6 +47,7 @@ interface SearchResult {
 }
 
 export function TogetherView() {
+  const router = useRouter();
   const { room, user, refreshActivities } = useRoom();
   const [usersCriteria, setUsersCriteria] = useState<Record<string, UserCriteria | null>>({});
   const [combinedCriteria, setCombinedCriteria] = useState<CombinedCriteria | null>(null);
@@ -52,6 +61,8 @@ export function TogetherView() {
   const [aiLoading, setAiLoading] = useState(false);
   const [criteriaExpanded, setCriteriaExpanded] = useState(false);
   const [favoritesView, setFavoritesView] = useState<'list' | 'tiles'>('list');
+  const [addUrlModalOpen, setAddUrlModalOpen] = useState(false);
+  const [searchExplainerOpen, setSearchExplainerOpen] = useState(false);
 
   const roomId = room?.roomId;
 
@@ -374,6 +385,92 @@ export function TogetherView() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              {/* Add Button with Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    className={hg ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white' : 'bg-sky-600 hover:bg-sky-700'}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-1"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="M12 5v14" />
+                    </svg>
+                    Add
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className={hg ? 'bg-white' : 'bg-slate-900 border-slate-700'}>
+                  <DropdownMenuItem
+                    onClick={() => setAddUrlModalOpen(true)}
+                    className={hg ? 'cursor-pointer' : 'cursor-pointer focus:bg-slate-800'}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    Add from URL
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push('/extension')}
+                    className={hg ? 'cursor-pointer' : 'cursor-pointer focus:bg-slate-800'}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" x2="21" y1="14" y2="3" />
+                    </svg>
+                    Use browser extension
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setSearchExplainerOpen(true)}
+                    className={hg ? 'cursor-pointer' : 'cursor-pointer focus:bg-slate-800'}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    From the search
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* View Toggle Buttons */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -441,6 +538,26 @@ export function TogetherView() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add from URL Modal */}
+      {roomId && (
+        <AddFromUrlModal
+          open={addUrlModalOpen}
+          onOpenChange={setAddUrlModalOpen}
+          roomId={roomId}
+          onSuccess={() => {
+            fetchData();
+            refreshActivities();
+          }}
+        />
+      )}
+
+      {/* Search Explainer Modal */}
+      <SearchExplainerModal
+        open={searchExplainerOpen}
+        onOpenChange={setSearchExplainerOpen}
+        onExpandCriteria={() => setCriteriaExpanded(true)}
+      />
     </div>
   );
 }
