@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ActivityItem } from './ActivityItem';
+import { GroupedActivityItem, groupActivities } from './GroupedActivityItem';
 import type { Activity } from '@/lib/types';
 import { toast } from 'sonner';
 import { isHomegateTheme } from '@/lib/theme';
@@ -28,7 +29,7 @@ interface ActivityFeedProps {
   currentUserId?: string;
 }
 
-type ActivityFilter = 'all' | 'chat' | 'status' | 'system';
+type ActivityFilter = 'all' | 'chat' | 'ai' | 'status' | 'system';
 
 const ARCHIVED_STORAGE_KEY = (roomId: string) => `sr_archived_activities_${roomId}`;
 
@@ -97,12 +98,35 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
   // Filter active activities based on selected filter
   const filteredActivities = useMemo(() => {
     return activeActivities.filter((a) => {
-      if (activeFilter === 'chat') return a.type === 'ChatMessage';
+      if (activeFilter === 'chat') {
+        // User-to-user messages only (not AI related)
+        if (a.type !== 'ChatMessage') return false;
+        if (a.senderType === 'ai_copilot') return false;
+        // Exclude messages that start with "AI" (directed to AI)
+        const text = 'text' in a ? (a.text as string) : '';
+        return !text.toLowerCase().startsWith('ai');
+      }
+      if (activeFilter === 'ai') {
+        // AI responses or messages directed to AI
+        if (a.senderType === 'ai_copilot') return true;
+        if (a.type === 'ChatMessage' && a.senderType === 'user') {
+          const text = 'text' in a ? (a.text as string) : '';
+          return text.toLowerCase().startsWith('ai');
+        }
+        // AI-generated activities
+        if (a.type === 'AICriteriaProposed' || a.type === 'AICompromiseProposed') return true;
+        return false;
+      }
       if (activeFilter === 'status') return a.type === 'ListingStatusChanged';
       if (activeFilter === 'system') return a.senderType === 'system';
       return true;
     });
   }, [activeActivities, activeFilter]);
+
+  // Group consecutive similar activities
+  const groupedActivities = useMemo(() => {
+    return groupActivities(filteredActivities);
+  }, [filteredActivities]);
 
   // Update message when initialMessage prop changes
   useEffect(() => {
@@ -113,6 +137,10 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
 
   const handleArchive = (activityId: string) => {
     setArchivedIds((prev) => new Set([...prev, activityId]));
+  };
+
+  const handleArchiveGroup = (activityIds: string[]) => {
+    setArchivedIds((prev) => new Set([...prev, ...activityIds]));
   };
 
   const handleArchiveAll = () => {
@@ -204,62 +232,65 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
           </button>
         </div>
 
-        {/* Filter chips and Archive All */}
-        <div className="flex items-center justify-between mt-3 gap-2">
-          <div className="flex gap-1.5 flex-wrap">
-            {(['all', 'chat', 'status', 'system'] as const).map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
-                  activeFilter === filter
-                    ? hg
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-slate-900 border-white'
-                    : hg
-                      ? 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                      : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
-                }`}
-              >
-                {filter === 'all' && 'All'}
-                {filter === 'chat' && 'Chat'}
-                {filter === 'status' && 'Status'}
-                {filter === 'system' && 'System'}
-              </button>
-            ))}
-          </div>
-          {filteredActivities.length > 0 && (
+        {/* Filter chips */}
+        <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+          {(['all', 'chat', 'ai', 'status', 'system'] as const).map((filter) => (
             <button
-              onClick={handleArchiveAll}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-all flex items-center gap-1.5 ${
-                hg
-                  ? 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                  : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                activeFilter === filter
+                  ? hg
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-slate-900 border-white'
+                  : hg
+                    ? 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
               }`}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-3 w-3"
-              >
-                <rect width="20" height="5" x="2" y="3" rx="1" />
-                <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
-                <path d="M10 12h4" />
-              </svg>
-              Archive All
+              {filter === 'all' && 'All'}
+              {filter === 'chat' && 'Chat'}
+              {filter === 'ai' && 'AI'}
+              {filter === 'status' && 'Status'}
+              {filter === 'system' && 'System'}
             </button>
-          )}
+          ))}
         </div>
       </div>
 
       {/* Activity list */}
       <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollAreaRef}>
-        <div className="py-4 space-y-4">
+        <div className="py-4 space-y-3">
+          {/* Archive All button - shown when there are activities */}
+          {filteredActivities.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={handleArchiveAll}
+                className={`text-xs px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 ${
+                  hg
+                    ? 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:text-gray-700'
+                    : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800 hover:text-slate-300'
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-3.5 w-3.5"
+                >
+                  <rect width="20" height="5" x="2" y="3" rx="1" />
+                  <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+                  <path d="M10 12h4" />
+                </svg>
+                Archive All
+              </button>
+            </div>
+          )}
+
           {/* Archived activities section */}
           {archivedActivities.length > 0 && (
             <div
@@ -317,8 +348,8 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
             </div>
           )}
 
-          {/* Active activities */}
-          {filteredActivities.length === 0 && archivedActivities.length === 0 ? (
+          {/* Active activities (grouped) */}
+          {groupedActivities.length === 0 && archivedActivities.length === 0 ? (
             <div className={`text-center py-8 ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -335,41 +366,47 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
               <p>No activity yet</p>
               <p className="text-xs mt-1">Start a conversation or make changes</p>
             </div>
-          ) : filteredActivities.length === 0 ? (
+          ) : groupedActivities.length === 0 ? (
             <div className={`text-center py-8 ${hg ? 'text-gray-400' : 'text-slate-500'}`}>
               <p className="text-sm">No activities match this filter</p>
             </div>
           ) : (
             <>
-              {filteredActivities.map((activity) => (
-                <ActivityItem key={activity.activityId} activity={activity} onArchive={handleArchive} currentUserId={currentUserId} />
+              {groupedActivities.map((group) => (
+                <GroupedActivityItem
+                  key={group.key}
+                  group={group}
+                  onArchive={handleArchive}
+                  onArchiveGroup={handleArchiveGroup}
+                  currentUserId={currentUserId}
+                />
               ))}
               {waitingForAI && (
-                <div className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className={`flex items-start gap-3 p-3 rounded-lg animate-in fade-in slide-in-from-bottom-2 duration-300 ${hg ? 'bg-emerald-50' : 'bg-emerald-500/5'}`}>
                   <div
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                     style={{ backgroundColor: AI_COPILOT.avatarColor }}
                   >
                     <span className="text-white font-semibold text-xs">AI</span>
                   </div>
-                  <div className={`flex-1 rounded-lg px-3 py-2 ${hg ? 'bg-gray-100' : 'bg-slate-800/50'}`}>
-                    <div className={`text-xs font-medium mb-1 ${hg ? 'text-green-600' : 'text-green-400'}`}>
+                  <div className="flex-1">
+                    <div className={`text-xs font-medium mb-1 ${hg ? 'text-emerald-600' : 'text-emerald-400'}`}>
                       AI Co-pilot
                     </div>
                     <div className="flex items-center gap-1">
                       <span
-                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`}
+                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-emerald-400' : 'bg-emerald-400'}`}
                         style={{ animationDelay: '0ms' }}
                       />
                       <span
-                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`}
+                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-emerald-400' : 'bg-emerald-400'}`}
                         style={{ animationDelay: '150ms' }}
                       />
                       <span
-                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-gray-400' : 'bg-slate-400'}`}
+                        className={`inline-block w-2 h-2 rounded-full animate-bounce ${hg ? 'bg-emerald-400' : 'bg-emerald-400'}`}
                         style={{ animationDelay: '300ms' }}
                       />
-                      <span className={`ml-2 text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Thinking...</span>
+                      <span className={`ml-2 text-sm ${hg ? 'text-emerald-600' : 'text-emerald-400'}`}>Thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -516,7 +553,7 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
         </div>
         {!aiMode && (
           <p className={`text-xs mt-2 ${hg ? 'text-gray-500' : 'text-slate-500'}`}>
-            Tip: Select &ldquo;AI Co-pilot&ldquo; to chat directly with your AI assistant
+            Tip: Start with &ldquo;AI,&rdquo; to ask the AI Co-pilot for help
           </p>
         )}
       </div>

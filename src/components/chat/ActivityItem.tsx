@@ -21,6 +21,8 @@ import {
   Calendar,
   Lightbulb,
   Archive,
+  MessageCircle,
+  Bot,
 } from 'lucide-react';
 import type { Activity, ActivityType } from '@/lib/types';
 import { USERS, AI_COPILOT } from '@/lib/types';
@@ -356,6 +358,133 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
     );
   }
 
+  // AI Chat messages - card style similar to system activities (Homegate theme)
+  if (isChat && isAI && hg) {
+    return (
+      <>
+        <div
+          onClick={() => setExpanded(true)}
+          className="flex gap-3 p-3 rounded-lg relative group bg-emerald-50 cursor-pointer hover:bg-emerald-100 transition-colors"
+        >
+          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-white flex items-center justify-center shadow-sm text-emerald-500">
+            <Bot className="h-3.5 w-3.5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+              <span className="font-medium text-emerald-600">AI Co-pilot</span>
+              <span>·</span>
+              <span>{timeAgo}</span>
+              <span className="text-gray-400">(click to expand)</span>
+            </div>
+            <div className="text-sm text-gray-600 line-clamp-3 whitespace-pre-wrap">{activity.text}</div>
+          </div>
+          {/* Archive button - shown on hover */}
+          {showArchiveButton && onArchive && (
+            <button
+              onClick={handleArchive}
+              className="absolute right-2 top-2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm"
+              title="Archive"
+            >
+              <Archive className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Full-screen AI response dialog */}
+        <Dialog open={expanded} onOpenChange={setExpanded}>
+          <DialogContent
+            className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col bg-white"
+          >
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-full"
+                  style={{ backgroundColor: AI_COPILOT.avatarColor }}
+                >
+                  <span className="text-white font-semibold text-sm">AI</span>
+                </div>
+                <div>
+                  <span className="text-emerald-600">AI Co-pilot</span>
+                  <p className="text-xs font-normal text-gray-400">{timeAgo}</p>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto pr-2 text-gray-700">
+              <div className="prose prose-sm max-w-none whitespace-pre-wrap leading-relaxed text-base">
+                {activity.text}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // User chat messages - card style (Homegate theme)
+  if (isChat && !isAI && hg) {
+    // Current user: right-aligned bubble style
+    if (isCurrentUser) {
+      return (
+        <div className="flex gap-3 relative group justify-end">
+          <div className="flex flex-col items-end max-w-[80%]">
+            <div className="flex items-center gap-2 mb-1 flex-row-reverse">
+              <span className="text-xs text-gray-400">{timeAgo}</span>
+              <span className="text-sm font-medium text-gray-900">{sender.name}</span>
+            </div>
+            <div className="inline-block rounded-2xl rounded-tr-sm px-4 py-2.5 bg-blue-500 text-white shadow-sm">
+              <p className="whitespace-pre-wrap text-sm">{activity.text}</p>
+            </div>
+          </div>
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarFallback style={{ backgroundColor: sender.color }} className="text-xs text-white">
+              {sender.initial}
+            </AvatarFallback>
+          </Avatar>
+          {/* Archive button - shown on hover */}
+          {showArchiveButton && onArchive && (
+            <button
+              onClick={handleArchive}
+              className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm"
+              title="Archive"
+            >
+              <Archive className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // Other user: left-aligned card style
+    return (
+      <div className="flex gap-3 p-3 rounded-lg relative group bg-gray-50">
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarFallback style={{ backgroundColor: sender.color }} className="text-xs text-white">
+            {sender.initial}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+            <span className="font-medium text-gray-700">{sender.name}</span>
+            <span>·</span>
+            <span>{timeAgo}</span>
+          </div>
+          <p className="text-sm text-gray-600 whitespace-pre-wrap">{activity.text}</p>
+        </div>
+        {/* Archive button - shown on hover */}
+        {showArchiveButton && onArchive && (
+          <button
+            onClick={handleArchive}
+            className="absolute right-2 top-2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm"
+            title="Archive"
+          >
+            <Archive className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback for non-Homegate theme (dark theme)
   return (
     <>
       <div
@@ -363,14 +492,10 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
         className={`flex gap-3 relative group ${isCurrentUser ? 'flex-row-reverse' : ''} ${
           isChat
             ? isAI
-              ? hg
-                ? 'bg-emerald-50 -mx-4 px-4 py-3 border-l-2 border-emerald-500 cursor-pointer hover:bg-emerald-100 transition-colors'
-                : 'bg-emerald-500/5 -mx-4 px-4 py-3 border-l-2 border-emerald-500/50 cursor-pointer hover:bg-emerald-500/10 transition-colors'
+              ? 'bg-emerald-500/5 -mx-4 px-4 py-3 border-l-2 border-emerald-500/50 cursor-pointer hover:bg-emerald-500/10 transition-colors'
               : isCurrentUser
-                ? hg
-                  ? '-mx-4 px-4 py-2'
-                  : '-mx-4 px-4 py-2'
-                : ''
+                ? '-mx-4 px-4 py-2'
+                : 'bg-slate-800/30 -mx-4 px-4 py-3 rounded-lg'
             : 'opacity-75'
         }`}
       >
@@ -383,23 +508,23 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
           <div className={`flex items-center gap-2 mb-1 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
             <span
               className={`text-sm font-medium ${
-                isAI ? (hg ? 'text-emerald-600' : 'text-emerald-400') : hg ? 'text-gray-900' : 'text-white'
+                isAI ? 'text-emerald-400' : 'text-white'
               }`}
             >
               {sender.name}
             </span>
-            <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>{timeAgo}</span>
+            <span className="text-xs text-slate-500">{timeAgo}</span>
             {!isChat && (
               <Badge variant="outline" className="text-xs">
                 {activity.type.replace(/([A-Z])/g, ' $1').trim()}
               </Badge>
             )}
             {isClickable && (
-              <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>(click to expand)</span>
+              <span className="text-xs text-slate-500">(click to expand)</span>
             )}
           </div>
           {isCurrentUser && isChat ? (
-            <div className={`inline-block rounded-lg px-3 py-2 ${hg ? 'bg-blue-500 text-white' : 'bg-sky-600 text-white'}`}>
+            <div className="inline-block rounded-lg px-3 py-2 bg-sky-600 text-white">
               {renderContent()}
             </div>
           ) : (
@@ -411,11 +536,7 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
         {showArchiveButton && onArchive && (
           <button
             onClick={handleArchive}
-            className={`absolute ${isCurrentUser ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${
-              hg
-                ? 'bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm'
-                : 'bg-slate-900 hover:bg-slate-700 text-slate-500 hover:text-slate-300 shadow-sm'
-            }`}
+            className={`absolute ${isCurrentUser ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-slate-900 hover:bg-slate-700 text-slate-500 hover:text-slate-300 shadow-sm`}
             title="Archive"
           >
             <svg
@@ -440,9 +561,7 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
       {isClickable && (
         <Dialog open={expanded} onOpenChange={setExpanded}>
           <DialogContent
-            className={`max-w-3xl max-h-[85vh] overflow-hidden flex flex-col ${
-              hg ? 'bg-white' : 'bg-slate-900 border-slate-700'
-            }`}
+            className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col bg-slate-900 border-slate-700"
           >
             <DialogHeader className="flex-shrink-0">
               <DialogTitle className="flex items-center gap-3">
@@ -453,12 +572,12 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
                   <span className="text-white font-semibold text-sm">AI</span>
                 </div>
                 <div>
-                  <span className={hg ? 'text-emerald-600' : 'text-emerald-400'}>AI Co-pilot</span>
-                  <p className={`text-xs font-normal ${hg ? 'text-gray-400' : 'text-slate-500'}`}>{timeAgo}</p>
+                  <span className="text-emerald-400">AI Co-pilot</span>
+                  <p className="text-xs font-normal text-slate-500">{timeAgo}</p>
                 </div>
               </DialogTitle>
             </DialogHeader>
-            <div className={`flex-1 overflow-y-auto pr-2 ${hg ? 'text-gray-700' : 'text-slate-200'}`}>
+            <div className="flex-1 overflow-y-auto pr-2 text-slate-200">
               <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap leading-relaxed text-base">
                 {activity.text}
               </div>
