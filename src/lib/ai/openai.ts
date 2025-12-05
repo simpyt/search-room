@@ -37,6 +37,16 @@ export interface ChatMessage {
   content: string;
 }
 
+interface DiscussedListing {
+  listingId: string;
+  title: string;
+  location: string;
+  price?: number;
+  rooms?: number;
+  livingSpace?: number;
+  imageUrl?: string;
+}
+
 interface AIContext {
   usersCriteria: Record<string, UserCriteria | null>;
   combinedCriteria: CombinedCriteria | null;
@@ -45,6 +55,7 @@ interface AIContext {
   userMessage: string;
   roomContext?: RoomContext;
   conversationHistory?: ChatMessage[];
+  discussedListing?: DiscussedListing | null;
 }
 
 export async function generateAIResponse(
@@ -73,6 +84,20 @@ export async function generateAIResponse(
     }
   }
 
+  // Build discussed listing section if available
+  let listingContextSection = '';
+  if (context.discussedListing) {
+    const listing = context.discussedListing;
+    const listingParts: string[] = [
+      `Title: ${listing.title}`,
+      `Location: ${listing.location}`,
+    ];
+    if (listing.price) listingParts.push(`Price: CHF ${listing.price.toLocaleString()}`);
+    if (listing.rooms) listingParts.push(`Rooms: ${listing.rooms}`);
+    if (listing.livingSpace) listingParts.push(`Living space: ${listing.livingSpace} m²`);
+    listingContextSection = `\n\n**Currently discussing this specific listing:**\n${listingParts.join('\n')}\nPlease provide specific advice about this property in relation to their search criteria.`;
+  }
+
   const baseSystemPrompt = `You are an AI Co-pilot for Search Room, a collaborative property search application. 
 You help two partners (Pierre and Marie) find their perfect home together.
 
@@ -87,7 +112,7 @@ Current context:
 - User asking: ${userName}
 - Number of favorites saved: ${context.favoritesCount}
 ${context.compatibility ? `- Current compatibility: ${context.compatibility.scorePercent}% (${context.compatibility.level})` : '- Compatibility: Not yet calculated'}
-${context.combinedCriteria ? `- Combined criteria set: Yes` : '- Combined criteria: Not yet set'}${roomContextSection}
+${context.combinedCriteria ? `- Combined criteria set: Yes` : '- Combined criteria: Not yet set'}${roomContextSection}${listingContextSection}
 
 Keep responses concise and helpful. If asked about specific criteria or compatibility details, provide clear explanations. Use the searcher profile information to provide more personalized and relevant suggestions.`;
 

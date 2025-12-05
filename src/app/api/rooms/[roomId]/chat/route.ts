@@ -26,7 +26,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const { message } = body;
+    const { message, listingContext } = body;
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -63,6 +63,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           content: a.text,
         })) as ChatMessage[];
 
+      // If discussing a specific listing, find it for full context
+      let discussedListing = null;
+      if (listingContext?.listingId) {
+        discussedListing = listings.find(l => l.listingId === listingContext.listingId) || listingContext;
+      }
+
       const context = {
         usersCriteria,
         combinedCriteria,
@@ -71,6 +77,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         userMessage: message.replace(/^@?ai[,:]?\s/i, '').trim(),
         roomContext: room?.context,
         conversationHistory,
+        discussedListing,
       };
 
       // Generate AI response
