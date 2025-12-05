@@ -7,7 +7,7 @@ import {
   saveCombinedCriteria,
 } from '@/lib/db/criteria';
 import { logAICriteriaProposed } from '@/lib/db/activities';
-import { generateCriteriaFromPrompt } from '@/lib/ai/openai';
+import { generateCriteriaFromPrompt, GuardrailError } from '@/lib/ai/openai';
 
 type RouteParams = { params: Promise<{ roomId: string }> };
 
@@ -72,6 +72,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       explanation,
     });
   } catch (error) {
+    // Handle guardrail blocks with 400 and user-friendly message
+    if (error instanceof GuardrailError) {
+      return NextResponse.json(
+        { error: error.message, guardrail: true },
+        { status: 400 }
+      );
+    }
     console.error('AI criteria error:', error);
     return NextResponse.json(
       { error: 'Failed to generate criteria' },

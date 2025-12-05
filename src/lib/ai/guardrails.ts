@@ -5,6 +5,20 @@
  * See docs/AI_GUARDRAILS.md for full documentation.
  */
 
+/**
+ * Custom error for guardrail violations - allows API routes to distinguish
+ * guardrail blocks from other errors and return appropriate status codes.
+ */
+export class GuardrailError extends Error {
+  public readonly category: GuardrailResult['category'];
+
+  constructor(message: string, category?: GuardrailResult['category']) {
+    super(message);
+    this.name = 'GuardrailError';
+    this.category = category;
+  }
+}
+
 export interface GuardrailResult {
   allowed: boolean;
   reason?: string;
@@ -263,3 +277,4 @@ export function getDeflectionMessage(result: GuardrailResult): string {
   }
   return DEFLECTION_MESSAGES.default;
 }
+

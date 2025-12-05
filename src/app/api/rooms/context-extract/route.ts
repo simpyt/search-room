@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
-import { generateCriteriaAndContextFromDescription } from '@/lib/ai/openai';
+import { generateCriteriaAndContextFromDescription, GuardrailError } from '@/lib/ai/openai';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +28,13 @@ export async function POST(request: NextRequest) {
       explanation: result.explanation,
     });
   } catch (error) {
+    // Handle guardrail blocks with 400 and user-friendly message
+    if (error instanceof GuardrailError) {
+      return NextResponse.json(
+        { error: error.message, guardrail: true },
+        { status: 400 }
+      );
+    }
     console.error('Context extraction error:', error);
     return NextResponse.json(
       { error: 'Failed to analyze description' },
@@ -35,5 +42,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 

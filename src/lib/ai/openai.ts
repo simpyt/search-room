@@ -12,6 +12,7 @@ import {
   validateOutput,
   withGuardrails,
   getDeflectionMessage,
+  GuardrailError,
   type GuardrailResult,
 } from './guardrails';
 
@@ -27,7 +28,8 @@ function getOpenAI(): OpenAI {
   return openaiClient;
 }
 
-// Re-export guardrail types for convenience
+// Re-export guardrail types and error for convenience
+export { GuardrailError };
 export type { GuardrailResult };
 
 export interface ChatMessage {
@@ -151,6 +153,12 @@ export async function generateCriteriaFromPrompt(
   prompt: string,
   existingCriteria?: SearchCriteria
 ): Promise<{ criteria: SearchCriteria; weights: CriteriaWeights; explanation: string }> {
+  // ===== GUARDRAIL: Input Validation =====
+  const inputCheck = validateInput(prompt);
+  if (!inputCheck.allowed) {
+    throw new GuardrailError(getDeflectionMessage(inputCheck), inputCheck.category);
+  }
+
   const systemPrompt = `You are a helpful assistant that converts natural language property search descriptions into structured search criteria.
 
 Available fields:
@@ -226,6 +234,12 @@ export async function generateCriteriaAndContextFromDescription(
   context: ExtractedContext;
   explanation: string;
 }> {
+  // ===== GUARDRAIL: Input Validation =====
+  const inputCheck = validateInput(description);
+  if (!inputCheck.allowed) {
+    throw new GuardrailError(getDeflectionMessage(inputCheck), inputCheck.category);
+  }
+
   const systemPrompt = `You are a helpful assistant that analyzes a natural language description of someone's property search needs. You extract:
 1. Structured search criteria for property search
 2. Profile/context information about the searchers
