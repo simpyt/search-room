@@ -420,9 +420,9 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
     );
   }
 
-  // User chat messages - card style (Homegate theme)
+  // User chat messages - bubble style (Homegate theme)
   if (isChat && !isAI && hg) {
-    // Current user: right-aligned bubble style
+    // Current user: right-aligned bubble
     if (isCurrentUser) {
       return (
         <div className="flex gap-3 relative group justify-end">
@@ -454,27 +454,28 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
       );
     }
 
-    // Other user: left-aligned card style
+    // Other user: left-aligned bubble (same style, mirrored)
     return (
-      <div className="flex gap-3 p-3 rounded-lg relative group bg-gray-50">
+      <div className="flex gap-3 relative group">
         <Avatar className="h-8 w-8 flex-shrink-0">
           <AvatarFallback style={{ backgroundColor: sender.color }} className="text-xs text-white">
             {sender.initial}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-            <span className="font-medium text-gray-700">{sender.name}</span>
-            <span>·</span>
-            <span>{timeAgo}</span>
+        <div className="flex flex-col items-start max-w-[80%]">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-medium text-gray-900">{sender.name}</span>
+            <span className="text-xs text-gray-400">{timeAgo}</span>
           </div>
-          <p className="text-sm text-gray-600 whitespace-pre-wrap">{activity.text}</p>
+          <div className="inline-block rounded-2xl rounded-tl-sm px-4 py-2.5 bg-gray-100 text-gray-800 shadow-sm">
+            <p className="whitespace-pre-wrap text-sm">{activity.text}</p>
+          </div>
         </div>
         {/* Archive button - shown on hover */}
         {showArchiveButton && onArchive && (
           <button
             onClick={handleArchive}
-            className="absolute right-2 top-2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm"
+            className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm"
             title="Archive"
           >
             <Archive className="h-3.5 w-3.5" />
