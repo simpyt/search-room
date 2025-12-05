@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { isHomegateTheme } from '@/lib/theme';
 import CompatibilityQuiz from './CompatibilityQuiz';
@@ -21,15 +19,15 @@ import {
   type ArticleSlug,
 } from './articles';
 
-type SheetContent = 'quiz' | ArticleSlug | null;
+type ModalContent = 'quiz' | ArticleSlug | null;
 
 export default function ResourcesSection() {
   const hg = isHomegateTheme();
   const router = useRouter();
-  const [openSheet, setOpenSheet] = useState<SheetContent>(null);
+  const [openModal, setOpenModal] = useState<ModalContent>(null);
 
-  const handleOpenFullPage = (type: SheetContent) => {
-    setOpenSheet(null);
+  const handleOpenFullPage = (type: ModalContent) => {
+    setOpenModal(null);
     if (type === 'quiz') {
       router.push('/rooms/quiz');
     } else if (type) {
@@ -39,7 +37,7 @@ export default function ResourcesSection() {
 
   const renderArticleContent = (slug: ArticleSlug) => {
     const props = {
-      onClose: () => setOpenSheet(null),
+      onClose: () => setOpenModal(null),
       onOpenFullPage: () => handleOpenFullPage(slug),
       isFullPage: false,
     };
@@ -100,7 +98,7 @@ export default function ResourcesSection() {
               ? 'border-[#e5007d]/30 bg-gradient-to-br from-[#fff0f7] to-white hover:border-[#e5007d]/50 hover:shadow-lg hover:shadow-[#e5007d]/10'
               : 'border-sky-500/30 bg-gradient-to-br from-sky-900/20 to-slate-900 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10'
           }`}
-          onClick={() => setOpenSheet('quiz')}
+          onClick={() => setOpenModal('quiz')}
         >
           <CardContent className="p-5">
             <div
@@ -134,7 +132,7 @@ export default function ResourcesSection() {
                 ? 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                 : 'border-slate-700/50 bg-slate-900/50 hover:border-slate-600 hover:bg-slate-900/80'
             }`}
-            onClick={() => setOpenSheet(article.slug)}
+            onClick={() => setOpenModal(article.slug)}
           >
             <CardContent className="p-5">
               <div className="text-2xl mb-3">{article.icon}</div>
@@ -152,46 +150,39 @@ export default function ResourcesSection() {
         ))}
       </div>
 
-      {/* Quiz Sheet */}
-      <Sheet open={openSheet === 'quiz'} onOpenChange={() => setOpenSheet(null)}>
-        <SheetContent
-          side="right"
-          className={`w-full sm:max-w-xl ${
+      {/* Quiz Modal */}
+      <Dialog open={openModal === 'quiz'} onOpenChange={() => setOpenModal(null)}>
+        <DialogContent
+          className={`max-w-2xl max-h-[90vh] p-0 overflow-hidden ${
             hg ? 'bg-white' : 'bg-slate-900 border-slate-700'
           }`}
         >
-          <SheetHeader className="mb-6">
-            <SheetTitle className={hg ? 'text-gray-900' : 'text-white'}>
-              Roommate Compatibility Quiz
-            </SheetTitle>
-          </SheetHeader>
-          <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
+          <ScrollArea className="max-h-[90vh] p-6">
             <CompatibilityQuiz
-              onClose={() => setOpenSheet(null)}
+              onClose={() => setOpenModal(null)}
               onOpenFullPage={() => handleOpenFullPage('quiz')}
             />
           </ScrollArea>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
-      {/* Article Sheets */}
+      {/* Article Modals */}
       {ARTICLES.map((article) => (
-        <Sheet
+        <Dialog
           key={article.slug}
-          open={openSheet === article.slug}
-          onOpenChange={() => setOpenSheet(null)}
+          open={openModal === article.slug}
+          onOpenChange={() => setOpenModal(null)}
         >
-          <SheetContent
-            side="right"
-            className={`w-full sm:max-w-xl ${
+          <DialogContent
+            className={`max-w-2xl max-h-[90vh] p-0 overflow-hidden ${
               hg ? 'bg-white' : 'bg-slate-900 border-slate-700'
             }`}
           >
-            <ScrollArea className="h-[calc(100vh-2rem)] pr-4">
+            <ScrollArea className="max-h-[90vh] p-6">
               {renderArticleContent(article.slug)}
             </ScrollArea>
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       ))}
     </section>
   );
