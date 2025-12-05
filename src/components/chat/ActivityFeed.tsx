@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, useTransition } from 'react';
+import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ActivityItem } from './ActivityItem';
 import { GroupedActivityItem, groupActivities } from './GroupedActivityItem';
 import type { Activity } from '@/lib/types';
-import type { ListingContext } from '@/app/rooms/[roomId]/layout';
+import type { ListingContext } from '@/app/rooms/[roomId]/RoomContext';
 import { toast } from 'sonner';
 import { isHomegateTheme } from '@/lib/theme';
 
@@ -58,9 +59,17 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
   });
   const [activeFilter, setActiveFilter] = useState<ActivityFilter>('all');
   const [aiMode, setAiMode] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hg = isHomegateTheme();
+
+  // Wrap filter changes in transition to keep UI responsive
+  const handleFilterChange = useCallback((filter: ActivityFilter) => {
+    startTransition(() => {
+      setActiveFilter(filter);
+    });
+  }, []);
 
   // Persist archived IDs to localStorage
   useEffect(() => {
@@ -138,20 +147,20 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
     }
   }, [initialMessage]);
 
-  const handleArchive = (activityId: string) => {
+  const handleArchive = useCallback((activityId: string) => {
     setArchivedIds((prev) => new Set([...prev, activityId]));
-  };
+  }, []);
 
-  const handleArchiveGroup = (activityIds: string[]) => {
+  const handleArchiveGroup = useCallback((activityIds: string[]) => {
     setArchivedIds((prev) => new Set([...prev, ...activityIds]));
-  };
+  }, []);
 
-  const handleArchiveAll = () => {
+  const handleArchiveAll = useCallback(() => {
     const idsToArchive = filteredActivities.map((a) => a.activityId);
     setArchivedIds((prev) => new Set([...prev, ...idsToArchive]));
-  };
+  }, [filteredActivities]);
 
-  const sendMessage = async (msg?: string) => {
+  const sendMessage = useCallback(async (msg?: string) => {
     const rawMessage = msg || message;
     if (!rawMessage.trim()) return;
 
@@ -199,27 +208,27 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
       setSending(false);
       setWaitingForAI(false);
     }
-  };
+  }, [message, listingContext, aiMode, roomId, onClearListingContext, scrollToBottom]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
-  };
+  }, [sendMessage]);
 
-  const handleSuggestionClick = (prompt: string) => {
+  const handleSuggestionClick = useCallback((prompt: string) => {
     setAiMode(true);
     // Strip "AI, " prefix from the prompt since AI mode will add it
     setMessage(prompt.replace(/^AI,?\s*/i, ''));
     inputRef.current?.focus();
-  };
+  }, []);
 
-  const handleAIButtonClick = () => {
+  const handleAIButtonClick = useCallback(() => {
     setAiMode(true);
     inputRef.current?.focus();
     scrollToBottom();
-  };
+  }, [scrollToBottom]);
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -254,8 +263,10 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
           {(['all', 'chat', 'ai', 'status', 'system'] as const).map((filter) => (
             <button
               key={filter}
-              onClick={() => setActiveFilter(filter)}
+              onClick={() => handleFilterChange(filter)}
               className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                isPending ? 'opacity-70' : ''
+              } ${
                 activeFilter === filter
                   ? hg
                     ? 'bg-gray-900 text-white border-gray-900'
@@ -521,9 +532,11 @@ export function ActivityFeed({ roomId, activities, onAIClick, initialMessage, in
             hg ? 'bg-blue-50' : 'bg-blue-500/10'
           }`}>
             {listingContext.imageUrl && (
-              <img
+              <Image
                 src={listingContext.imageUrl}
                 alt=""
+                width={32}
+                height={32}
                 className="h-8 w-8 rounded object-cover flex-shrink-0"
               />
             )}

@@ -1,10 +1,46 @@
 'use client';
 
 import { useState } from 'react';
-import { TogetherView } from '@/components/views/TogetherView';
-import { MyView } from '@/components/views/MyView';
-import { useRoom } from './layout';
+import dynamic from 'next/dynamic';
+import { useRoom } from './RoomContext';
 import { isHomegateTheme } from '@/lib/theme';
+
+// Dynamic imports with loading skeletons for code splitting
+const TogetherView = dynamic(
+  () => import('@/components/views/TogetherView').then((mod) => mod.TogetherView),
+  {
+    loading: () => <ViewSkeleton />,
+  }
+);
+
+const MyView = dynamic(
+  () => import('@/components/views/MyView').then((mod) => mod.MyView),
+  {
+    loading: () => <ViewSkeleton />,
+  }
+);
+
+function ViewSkeleton() {
+  const hg = isHomegateTheme();
+  return (
+    <div className="space-y-6">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className={`rounded-lg p-6 ${
+            hg ? 'bg-white border border-gray-200' : 'bg-slate-900/50 border border-slate-700/50'
+          }`}
+        >
+          <div className="space-y-4">
+            <div className={`h-6 w-40 rounded animate-pulse ${hg ? 'bg-gray-200' : 'bg-slate-700'}`} />
+            <div className={`h-4 w-64 rounded animate-pulse ${hg ? 'bg-gray-200' : 'bg-slate-700'}`} />
+            <div className={`h-32 rounded animate-pulse ${hg ? 'bg-gray-100' : 'bg-slate-800/50'}`} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function RoomPage() {
   const { room, user } = useRoom();
@@ -17,7 +53,7 @@ export default function RoomPage() {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* Sexy Tab Switcher */}
+      {/* Tab Switcher */}
       <div className="flex justify-center mb-8">
         <div
           className={`relative inline-flex p-1 rounded-2xl ${
@@ -113,4 +149,3 @@ export default function RoomPage() {
     </div>
   );
 }
-
