@@ -10,7 +10,7 @@ Collaborative property search POC with AI Co-pilot. Two users (Pierre & Marie) c
 - **Homegate API integration** (with mock data fallback)
 - **Favorites management** with status workflow
 - **Real-time activity feed** with polling
-- **Theme switcher** (Default dark mode + Homegate brand theme)
+- **Theme switcher** (Homegate brand theme by default, dark mode available)
 
 ## Tech Stack
 
@@ -78,7 +78,7 @@ All AI calls use `response_format: { type: 'json_object' }` for reliable structu
    OPENAI_API_KEY=sk-your-key
    HOMEGATE_API_URL=https://apitest.homegate.ch/search
    HOMEGATE_API_KEY=your_homegate_key
-   NEXT_PUBLIC_THEME=default  # or "homegate" for brand theme
+   NEXT_PUBLIC_THEME=homegate  # default: "homegate" (Homegate brand theme), or "dark" for dark mode
    ```
 
 5. Create the DynamoDB table:
@@ -149,10 +149,10 @@ src/
 
 Two themes available via `NEXT_PUBLIC_THEME`:
 
-- **`default`**: Dark mode with neutral palette
-- **`homegate`**: Homegate brand colors (magenta primary)
+- **`homegate`** (default): Homegate brand colors (magenta primary)
+- **`dark`**: Dark mode with neutral palette
 
-Theme CSS variables are defined in `src/app/globals.css`.
+If `NEXT_PUBLIC_THEME` is not set, the application defaults to `homegate`. Theme CSS variables are defined in `src/app/globals.css`.
 
 ## License
 
