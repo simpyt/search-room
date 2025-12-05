@@ -86,7 +86,7 @@ export default function ResourcesSection() {
             Living Together Resources
           </h2>
           <p className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
-            Tools and guides to help you thrive as roommates
+            Tools and guides to help you thrive as couple, partners or roommates
           </p>
         </div>
       </div>
