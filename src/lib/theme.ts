@@ -2,11 +2,11 @@
  * Theme configuration for the application.
  *
  * To switch themes, change the THEME environment variable in .env.local:
- *   NEXT_PUBLIC_THEME=default  (dark mode)
- *   NEXT_PUBLIC_THEME=homegate (Homegate style)
+ *   NEXT_PUBLIC_THEME=homegate (default - Homegate brand theme)
+ *   NEXT_PUBLIC_THEME=dark     (dark mode)
  */
 
-export const THEMES = ['homegate', 'default'] as const;
+export const THEMES = ['homegate', 'dark'] as const;
 export type Theme = (typeof THEMES)[number];
 
 export function getTheme(): Theme {
