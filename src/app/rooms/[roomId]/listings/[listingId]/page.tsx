@@ -26,12 +26,14 @@ import {
 } from '@/lib/types';
 import { toast } from 'sonner';
 import { isHomegateTheme } from '@/lib/theme';
+import { useRoom } from '../../RoomContext';
 
 export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
   const roomId = params.roomId as string;
   const listingId = params.listingId as string;
+  const { discussListing } = useRoom();
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [usersCriteria, setUsersCriteria] = useState<Record<string, UserCriteria | null>>({});
@@ -468,7 +470,17 @@ export default function ListingDetailPage() {
               <Button
                 variant="outline"
                 className={`w-full ${hg ? 'border-gray-300 hover:bg-gray-50' : 'border-slate-700 hover:bg-slate-800'}`}
-                onClick={() => router.push(`/rooms/${roomId}?discussListing=${listingId}`)}
+                onClick={() => {
+                  if (listing) {
+                    discussListing({
+                      listingId: listing.listingId,
+                      title: listing.title,
+                      price: listing.price,
+                      location: listing.location,
+                      imageUrl: listing.imageUrl,
+                    });
+                  }
+                }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

@@ -3,14 +3,6 @@
 import { createContext, useContext } from 'react';
 import type { RoomWithMembers, User, Activity } from '@/lib/types';
 
-export interface RoomContextValue {
-  room: RoomWithMembers | null;
-  user: User | null;
-  activities: Activity[];
-  refreshRoom: () => Promise<void>;
-  refreshActivities: () => Promise<void>;
-}
-
 export interface ListingContext {
   listingId: string;
   title: string;
@@ -19,12 +11,23 @@ export interface ListingContext {
   imageUrl?: string;
 }
 
+export interface RoomContextValue {
+  room: RoomWithMembers | null;
+  user: User | null;
+  activities: Activity[];
+  refreshRoom: () => Promise<void>;
+  refreshActivities: () => Promise<void>;
+  // Chat context for discussing listings
+  discussListing: (listing: ListingContext) => void;
+}
+
 export const RoomContext = createContext<RoomContextValue>({
   room: null,
   user: null,
   activities: [],
   refreshRoom: async () => {},
   refreshActivities: async () => {},
+  discussListing: () => {},
 });
 
 export const useRoom = () => useContext(RoomContext);

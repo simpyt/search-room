@@ -105,7 +105,7 @@ export function RoomLayoutClient({
     return () => clearInterval(interval);
   }, [fetchActivities]);
 
-  // Handle discussListing query param from listing detail page
+  // Handle discussListing query param from listing detail page (legacy support)
   useEffect(() => {
     const discussListingId = searchParams.get('discussListing');
     if (discussListingId) {
@@ -122,7 +122,10 @@ export function RoomLayoutClient({
               location: listing.location,
               imageUrl: listing.imageUrl,
             });
-            setSidebarOpen(true);
+            // Only open sheet on mobile (window width < 768px)
+            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+              setSidebarOpen(true);
+            }
           }
         } catch (error) {
           console.error('Failed to fetch listing for chat:', error);
@@ -132,6 +135,15 @@ export function RoomLayoutClient({
       router.replace(`/rooms/${roomId}`, { scroll: false });
     }
   }, [searchParams, roomId, router]);
+
+  // Function to discuss a listing (used by child pages)
+  const discussListing = useCallback((listing: ListingContext) => {
+    setListingContext(listing);
+    // Only open sheet on mobile
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(true);
+    }
+  }, []);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -184,6 +196,7 @@ export function RoomLayoutClient({
         activities,
         refreshRoom: fetchRoom,
         refreshActivities: fetchActivities,
+        discussListing,
       }}
     >
       <div className={`min-h-screen flex flex-col ${hg ? 'bg-gray-50' : 'bg-slate-950'}`}>
