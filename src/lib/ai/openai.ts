@@ -7,6 +7,13 @@ import type {
   CompatibilitySnapshot,
   RoomContext,
 } from '@/lib/types';
+import {
+  validateInput,
+  validateOutput,
+  withGuardrails,
+  getDeflectionMessage,
+  type GuardrailResult,
+} from './guardrails';
 
 // Lazy-load OpenAI client to avoid errors during build
 let openaiClient: OpenAI | null = null;
@@ -19,6 +26,9 @@ function getOpenAI(): OpenAI {
   }
   return openaiClient;
 }
+
+// Re-export guardrail types for convenience
+export type { GuardrailResult };
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -39,6 +49,13 @@ export async function generateAIResponse(
   context: AIContext,
   userName: string
 ): Promise<string> {
+  // ===== GUARDRAIL: Input Validation =====
+  const inputCheck = validateInput(context.userMessage);
+  if (!inputCheck.allowed) {
+    console.log(`[Guardrails] Input blocked: ${inputCheck.reason}`);
+    return getDeflectionMessage(inputCheck);
+  }
+
   // Build room context section if available
   let roomContextSection = '';
   if (context.roomContext) {
@@ -54,7 +71,7 @@ export async function generateAIResponse(
     }
   }
 
-  const systemPrompt = `You are an AI Co-pilot for Search Room, a collaborative property search application. 
+  const baseSystemPrompt = `You are an AI Co-pilot for Search Room, a collaborative property search application. 
 You help two partners (Pierre and Marie) find their perfect home together.
 
 Your capabilities:
@@ -71,6 +88,9 @@ ${context.compatibility ? `- Current compatibility: ${context.compatibility.scor
 ${context.combinedCriteria ? `- Combined criteria set: Yes` : '- Combined criteria: Not yet set'}${roomContextSection}
 
 Keep responses concise and helpful. If asked about specific criteria or compatibility details, provide clear explanations. Use the searcher profile information to provide more personalized and relevant suggestions.`;
+
+  // ===== GUARDRAIL: Enhanced System Prompt =====
+  const systemPrompt = withGuardrails(baseSystemPrompt);
 
   const userCriteriaInfo = Object.entries(context.usersCriteria)
     .map(([userId, crit]) => {
@@ -110,7 +130,17 @@ Keep responses concise and helpful. If asked about specific criteria or compatib
     if (message?.refusal) {
       return `I'm sorry, I cannot help with that request.`;
     }
-    return message?.content || 'I apologize, I could not generate a response.';
+    
+    const content = message?.content || 'I apologize, I could not generate a response.';
+    
+    // ===== GUARDRAIL: Output Validation =====
+    const outputCheck = validateOutput(content);
+    if (!outputCheck.allowed) {
+      console.warn(`[Guardrails] Output blocked: ${outputCheck.reason}`);
+      return 'I apologize, I encountered an issue generating a response. Please try rephrasing your question.';
+    }
+    
+    return content;
   } catch (error) {
     console.error('OpenAI API error:', error);
     return 'I apologize, I encountered an error processing your request. Please try again.';
