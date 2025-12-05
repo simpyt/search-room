@@ -33,6 +33,7 @@ import {
 import { isHomegateTheme } from '@/lib/theme';
 import type { RoomWithMembers, Activity, User } from '@/lib/types';
 import { USERS } from '@/lib/types';
+import { ResourcesSection } from '@/components/resources';
 
 interface RoomWithActivities extends RoomWithMembers {
   recentActivities: Activity[];
@@ -763,6 +764,9 @@ export default function RoomsPage() {
             ))}
           </div>
         )}
+
+        {/* Resources section */}
+        <ResourcesSection />
       </div>
 
       {/* Delete confirmation dialog */}
