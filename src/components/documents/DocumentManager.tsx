@@ -204,11 +204,6 @@ export function DocumentManager({ open, onOpenChange }: DocumentManagerProps) {
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
   const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
 
-  const selectedDocuments = useMemo(
-    () => documents.filter((doc) => selectedDocs.has(doc.id)),
-    [documents, selectedDocs]
-  );
-
   // Filter and sort documents
   const filteredAndSortedDocuments = useMemo(() => {
     let filtered = documents;
