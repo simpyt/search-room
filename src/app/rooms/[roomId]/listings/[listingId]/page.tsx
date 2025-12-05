@@ -204,11 +204,10 @@ export default function ListingDetailPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       {/* Back button */}
-      <Link
-        href={`/rooms/${roomId}`}
-        className={`inline-flex items-center gap-2 mb-6 ${
-          hg ? 'text-gray-500 hover:text-gray-900' : 'text-slate-400 hover:text-white'
-        }`}
+      <Button
+        variant="ghost"
+        onClick={() => router.push(`/rooms/${roomId}`)}
+        className={`mb-6 ${hg ? 'text-gray-600 hover:text-gray-900' : 'text-slate-400 hover:text-white'}`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -218,12 +217,12 @@ export default function ListingDetailPage() {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-4 w-4"
+          className="h-4 w-4 mr-2"
         >
           <path d="m15 18-6-6 6-6" />
         </svg>
         Back to Search Room
-      </Link>
+      </Button>
 
       {/* Header */}
       <div className="mb-6">
