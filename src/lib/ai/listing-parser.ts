@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import type { ListingSource } from '@/lib/types';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/utils/api-logger';
 
 // Lazy-load OpenAI client to avoid errors during build
 let openaiClient: OpenAI | null = null;
@@ -93,39 +94,64 @@ Return JSON in this exact format:
   "imageUrl": "string or null - main image URL"
 }`;
 
-  const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: userPrompt },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.1, // Low temperature for consistent extraction
-    max_tokens: 1000,
+  const startTime = logApiStart('openai', 'parseListingFromContent', {
+    url,
+    sourceBrand,
+    contentLength: cleanedContent.length,
+    hasJsonLd: !!jsonLd,
+    hasOgData: !!(ogData && Object.keys(ogData).length > 0),
   });
 
-  const responseContent = response.choices[0]?.message?.content;
-  if (!responseContent) {
-    throw new Error('No response from AI');
+  try {
+    const response = await getOpenAI().chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.1, // Low temperature for consistent extraction
+      max_tokens: 1000,
+    });
+
+    const responseContent = response.choices[0]?.message?.content;
+    if (!responseContent) {
+      throw new Error('No response from AI');
+    }
+
+    const parsed = JSON.parse(responseContent);
+
+    // Validate and normalize the response
+    const result: ParsedListing = {
+      title: parsed.title || 'Untitled Listing',
+      location: parsed.location || 'Unknown',
+      address: parsed.address || null,
+      price: typeof parsed.price === 'number' ? parsed.price : null,
+      currency: parsed.currency || 'CHF',
+      rooms: typeof parsed.rooms === 'number' ? parsed.rooms : null,
+      livingSpace: typeof parsed.livingSpace === 'number' ? parsed.livingSpace : null,
+      yearBuilt: typeof parsed.yearBuilt === 'number' ? parsed.yearBuilt : null,
+      features: Array.isArray(parsed.features) ? parsed.features : [],
+      imageUrl: parsed.imageUrl || null,
+      sourceBrand,
+      externalId,
+    };
+
+    logApiSuccess('openai', 'parseListingFromContent', startTime, {
+      model: response.model,
+      title: result.title,
+      location: result.location,
+      hasPrice: result.price !== null,
+      featuresCount: result.features.length,
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens,
+    });
+
+    return result;
+  } catch (error) {
+    logApiError('openai', 'parseListingFromContent', startTime, error);
+    throw error;
   }
-
-  const parsed = JSON.parse(responseContent);
-
-  // Validate and normalize the response
-  return {
-    title: parsed.title || 'Untitled Listing',
-    location: parsed.location || 'Unknown',
-    address: parsed.address || null,
-    price: typeof parsed.price === 'number' ? parsed.price : null,
-    currency: parsed.currency || 'CHF',
-    rooms: typeof parsed.rooms === 'number' ? parsed.rooms : null,
-    livingSpace: typeof parsed.livingSpace === 'number' ? parsed.livingSpace : null,
-    yearBuilt: typeof parsed.yearBuilt === 'number' ? parsed.yearBuilt : null,
-    features: Array.isArray(parsed.features) ? parsed.features : [],
-    imageUrl: parsed.imageUrl || null,
-    sourceBrand,
-    externalId,
-  };
 }
 
 /**

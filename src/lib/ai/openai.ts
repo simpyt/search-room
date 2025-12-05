@@ -15,6 +15,7 @@ import {
   GuardrailError,
   type GuardrailResult,
 } from './guardrails';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/utils/api-logger';
 
 // Lazy-load OpenAI client to avoid errors during build
 let openaiClient: OpenAI | null = null;
@@ -127,6 +128,12 @@ Keep responses concise and helpful. If asked about specific criteria or compatib
     })
     .join('\n');
 
+  const startTime = logApiStart('openai', 'generateAIResponse', {
+    userName,
+    messageLength: context.userMessage.length,
+    historyLength: context.conversationHistory?.length ?? 0,
+  });
+
   try {
     // Build messages array with conversation history
     const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
@@ -150,11 +157,13 @@ Keep responses concise and helpful. If asked about specific criteria or compatib
       max_completion_tokens: 40000,
     });
 
-    console.log('OpenAI response:', JSON.stringify(response.choices[0], null, 2));
-    
     const message = response.choices[0]?.message;
     // Handle potential refusal
     if (message?.refusal) {
+      logApiSuccess('openai', 'generateAIResponse', startTime, {
+        status: 'refusal',
+        model: response.model,
+      });
       return `I'm sorry, I cannot help with that request.`;
     }
     
@@ -164,12 +173,23 @@ Keep responses concise and helpful. If asked about specific criteria or compatib
     const outputCheck = validateOutput(content);
     if (!outputCheck.allowed) {
       console.warn(`[Guardrails] Output blocked: ${outputCheck.reason}`);
+      logApiSuccess('openai', 'generateAIResponse', startTime, {
+        status: 'blocked_by_guardrail',
+        reason: outputCheck.reason,
+      });
       return 'I apologize, I encountered an issue generating a response. Please try rephrasing your question.';
     }
+
+    logApiSuccess('openai', 'generateAIResponse', startTime, {
+      model: response.model,
+      responseLength: content.length,
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens,
+    });
     
     return content;
   } catch (error) {
-    console.error('OpenAI API error:', error);
+    logApiError('openai', 'generateAIResponse', startTime, error);
     return 'I apologize, I encountered an error processing your request. Please try again.';
   }
 }
@@ -210,6 +230,11 @@ Respond with a JSON object containing:
   "explanation": "Brief explanation of what was extracted"
 }`;
 
+  const startTime = logApiStart('openai', 'generateCriteriaFromPrompt', {
+    promptLength: prompt.length,
+    hasExistingCriteria: !!existingCriteria,
+  });
+
   try {
     const response = await getOpenAI().chat.completions.create({
       model: 'gpt-5-mini',
@@ -238,13 +263,21 @@ Respond with a JSON object containing:
       result.criteria.offerType = 'buy';
     }
 
+    logApiSuccess('openai', 'generateCriteriaFromPrompt', startTime, {
+      model: response.model,
+      criteriaFields: Object.keys(result.criteria || {}),
+      weightsCount: Object.keys(result.weights || {}).length,
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens,
+    });
+
     return {
       criteria: result.criteria,
       weights: result.weights || {},
       explanation: result.explanation || 'Criteria extracted from your description.',
     };
   } catch (error) {
-    console.error('OpenAI criteria generation error:', error);
+    logApiError('openai', 'generateCriteriaFromPrompt', startTime, error);
     throw new Error('Failed to generate criteria from prompt');
   }
 }
@@ -306,6 +339,10 @@ Respond with a JSON object containing:
   "explanation": "Brief summary of what was understood and extracted"
 }`;
 
+  const startTime = logApiStart('openai', 'generateCriteriaAndContextFromDescription', {
+    descriptionLength: description.length,
+  });
+
   try {
     const response = await getOpenAI().chat.completions.create({
       model: 'gpt-5-mini',
@@ -330,7 +367,7 @@ Respond with a JSON object containing:
     }
 
     // Build context with original description
-    const context: ExtractedContext = {
+    const extractedContext: ExtractedContext = {
       description,
       ...(result.context.familySize && { familySize: result.context.familySize }),
       ...(result.context.profession && { profession: result.context.profession }),
@@ -338,14 +375,22 @@ Respond with a JSON object containing:
       ...(result.context.preferences?.length && { preferences: result.context.preferences }),
     };
 
+    logApiSuccess('openai', 'generateCriteriaAndContextFromDescription', startTime, {
+      model: response.model,
+      criteriaFields: Object.keys(result.criteria || {}),
+      contextFields: Object.keys(extractedContext).filter((k) => k !== 'description'),
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens,
+    });
+
     return {
       criteria: result.criteria,
       weights: result.weights || {},
-      context,
+      context: extractedContext,
       explanation: result.explanation || 'Information extracted from your description.',
     };
   } catch (error) {
-    console.error('OpenAI context extraction error:', error);
+    logApiError('openai', 'generateCriteriaAndContextFromDescription', startTime, error);
     throw new Error('Failed to extract information from description');
   }
 }
@@ -377,6 +422,11 @@ Respond with JSON:
   "comment": "Brief explanation of where they align and differ"
 }`;
 
+  const startTime = logApiStart('openai', 'computeCompatibility', {
+    userALocation: criteriaA.criteria.location,
+    userBLocation: criteriaB.criteria.location,
+  });
+
   try {
     const response = await getOpenAI().chat.completions.create({
       model: 'gpt-5-mini',
@@ -397,12 +447,21 @@ Respond with JSON:
     }
 
     const result = JSON.parse(content);
+    const scorePercent = Math.max(0, Math.min(100, result.scorePercent || 50));
+
+    logApiSuccess('openai', 'computeCompatibility', startTime, {
+      model: response.model,
+      scorePercent,
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens,
+    });
+
     return {
-      scorePercent: Math.max(0, Math.min(100, result.scorePercent || 50)),
+      scorePercent,
       comment: result.comment || 'Compatibility analysis complete.',
     };
   } catch (error) {
-    console.error('OpenAI compatibility error:', error);
+    logApiError('openai', 'computeCompatibility', startTime, error);
     // Return a default response if AI fails
     return {
       scorePercent: 50,
@@ -432,6 +491,11 @@ Respond with JSON:
   "explanation": "Explanation of the compromise and trade-offs made"
 }`;
 
+  const startTime = logApiStart('openai', 'suggestCompromise', {
+    userALocation: criteriaA.criteria.location,
+    userBLocation: criteriaB.criteria.location,
+  });
+
   try {
     const response = await getOpenAI().chat.completions.create({
       model: 'gpt-5-mini',
@@ -458,13 +522,21 @@ Respond with JSON:
       result.criteria.offerType = criteriaA.criteria.offerType || 'buy';
     }
 
+    logApiSuccess('openai', 'suggestCompromise', startTime, {
+      model: response.model,
+      criteriaFields: Object.keys(result.criteria || {}),
+      weightsCount: Object.keys(result.weights || {}).length,
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens,
+    });
+
     return {
       criteria: result.criteria,
       weights: result.weights || {},
       explanation: result.explanation || 'Compromise criteria suggested.',
     };
   } catch (error) {
-    console.error('OpenAI compromise error:', error);
+    logApiError('openai', 'suggestCompromise', startTime, error);
     throw new Error('Failed to generate compromise suggestion');
   }
 }

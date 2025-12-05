@@ -1,4 +1,5 @@
 import type { SearchCriteria, Feature } from '@/lib/types';
+import { logApiStart, logApiSuccess, logApiError } from '@/lib/utils/api-logger';
 
 // --- Types ---
 
@@ -347,9 +348,20 @@ export async function searchHomegate(
     query: buildSearchQuery(criteria),
   };
 
+  const startTime = logApiStart('homegate', 'searchHomegate', {
+    location: criteria.location,
+    offerType: criteria.offerType,
+    priceRange: criteria.priceFrom || criteria.priceTo
+      ? `${criteria.priceFrom ?? 0}-${criteria.priceTo ?? '∞'}`
+      : undefined,
+    roomsRange: criteria.roomsFrom || criteria.roomsTo
+      ? `${criteria.roomsFrom ?? 0}-${criteria.roomsTo ?? '∞'}`
+      : undefined,
+    size: requestBody.size,
+    from: requestBody.from,
+  });
+
   try {
-    console.log('[Homegate] Searching with:', JSON.stringify(requestBody, null, 2));
-    
     const response = await fetch(`${apiUrl}/listings`, {
       method: 'POST',
       headers: {
@@ -362,15 +374,23 @@ export async function searchHomegate(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Homegate] API error:', response.status, errorText);
+      logApiError('homegate', 'searchHomegate', startTime, 
+        new Error(`HTTP ${response.status}: ${errorText.slice(0, 200)}`));
       return getMockResults(criteria);
     }
 
     const data: ApiSearchResponse = await response.json();
-    console.log('[Homegate] Found', data.total, 'results');
-    return transformApiResponse(data, criteria.offerType);
+    const result = transformApiResponse(data, criteria.offerType);
+
+    logApiSuccess('homegate', 'searchHomegate', startTime, {
+      totalCount: data.total,
+      returnedCount: result.results.length,
+      httpStatus: response.status,
+    });
+
+    return result;
   } catch (error) {
-    console.error('[Homegate] Search error:', error);
+    logApiError('homegate', 'searchHomegate', startTime, error);
     return getMockResults(criteria);
   }
 }
