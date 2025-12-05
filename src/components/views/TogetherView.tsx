@@ -309,7 +309,7 @@ export function TogetherView() {
             </div>
 
             {/* Search Controls */}
-            <div className={`flex items-center gap-4 pt-4 border-t ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
+            <div className={`flex flex-wrap items-center justify-between gap-4 pt-4 border-t ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
               <div className="flex items-center gap-2">
                 <span className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Combine mode:</span>
                 <Select value={combineMode} onValueChange={(v) => setCombineMode(v as CombineMode)}>
@@ -330,10 +330,10 @@ export function TogetherView() {
               <Button
                 onClick={handleSearch}
                 disabled={searching}
-                className={hg
+                className={`flex-shrink-0 ${hg
                   ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white'
                   : 'bg-sky-600 hover:bg-sky-700'
-                }
+                }`}
               >
                 {searching ? 'Searching...' : 'Search Properties'}
               </Button>
