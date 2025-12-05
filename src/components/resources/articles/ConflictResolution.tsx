@@ -92,13 +92,13 @@ export default function ConflictResolution({
           )}
         </div>
         <h1
-          className={`text-2xl md:text-3xl font-bold mb-3 ${
+          className={`text-2xl md:text-3xl font-bold mb-2 ${
             hg ? 'text-gray-900' : 'text-white'
           }`}
         >
           Conflict Resolution: Turning Friction Into Growth
         </h1>
-        <p className={`text-lg ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
+        <p className={`text-base ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
           Because &quot;fine&quot; said through clenched teeth isn&apos;t actually fine.
         </p>
       </header>

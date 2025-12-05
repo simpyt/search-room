@@ -92,13 +92,13 @@ export default function MoneyTalk({
           )}
         </div>
         <h1
-          className={`text-2xl md:text-3xl font-bold mb-3 ${
+          className={`text-2xl md:text-3xl font-bold mb-2 ${
             hg ? 'text-gray-900' : 'text-white'
           }`}
         >
           The Money Talk: Aligning Financial Expectations
         </h1>
-        <p className={`text-lg ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
+        <p className={`text-base ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
           The conversation nobody wants to have, but everyone needs to.
         </p>
       </header>

@@ -92,13 +92,13 @@ export default function LivingRules({
           )}
         </div>
         <h1
-          className={`text-2xl md:text-3xl font-bold mb-3 ${
+          className={`text-2xl md:text-3xl font-bold mb-2 ${
             hg ? 'text-gray-900' : 'text-white'
           }`}
         >
           Creating Shared Living Rules That Actually Work
         </h1>
-        <p className={`text-lg ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
+        <p className={`text-base ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
           How to build a roommate agreement that prevents problems instead of creating them.
         </p>
       </header>

@@ -92,13 +92,13 @@ export default function PersonalSpace({
           )}
         </div>
         <h1
-          className={`text-2xl md:text-3xl font-bold mb-3 ${
+          className={`text-2xl md:text-3xl font-bold mb-2 ${
             hg ? 'text-gray-900' : 'text-white'
           }`}
         >
           Balancing Togetherness and Personal Space
         </h1>
-        <p className={`text-lg ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
+        <p className={`text-base ${hg ? 'text-gray-600' : 'text-slate-400'}`}>
           Living together doesn&apos;t mean being together all the time.
         </p>
       </header>
