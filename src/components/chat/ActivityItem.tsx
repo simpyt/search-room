@@ -264,46 +264,21 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
     onArchive?.(activity.activityId);
   };
 
-  // System activities: same layout but more subtle, no "System" label
+  // System activities: same card layout as non-chat activities, slightly muted
   if (isSystem) {
+    // Use activity type config if available, fallback to info icon
+    const config = !isChat ? ACTIVITY_TYPE_CONFIG[activity.type as Exclude<ActivityType, 'ChatMessage'>] : null;
+    const bgClass = config?.bgClass ?? (hg ? 'bg-gray-50' : 'bg-slate-800/30');
+    const iconColor = config?.iconColor ?? (hg ? 'text-gray-400' : 'text-slate-500');
+    const label = config?.label;
+
     return (
-      <div className="flex gap-3 relative group opacity-60">
-        {/* Small icon placeholder to align with avatars */}
+      <div className={`flex gap-3 p-3 rounded-lg relative group ${bgClass}`}>
+        {/* Icon */}
         <div className={`h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-full ${
-          hg ? 'bg-gray-100' : 'bg-slate-800/50'
-        }`}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={`h-3.5 w-3.5 ${hg ? 'text-gray-400' : 'text-slate-500'}`}
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4" />
-            <path d="M12 8h.01" />
-          </svg>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className={`text-xs ${hg ? 'text-gray-400' : 'text-slate-500'}`}>{timeAgo}</span>
-          </div>
-          <div className="text-[13px]">{renderContent()}</div>
-        </div>
-        {/* Archive button - shown on hover */}
-        {showArchiveButton && onArchive && (
-          <button
-            onClick={handleArchive}
-            className={`absolute right-0 top-1/2 -translate-y-1/2 p-1 rounded-md transition-all opacity-0 group-hover:opacity-100 ${
-              hg
-                ? 'bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm'
-                : 'bg-slate-900 hover:bg-slate-700 text-slate-500 hover:text-slate-300 shadow-sm'
-            }`}
-            title="Archive"
-          >
+          hg ? 'bg-white shadow-sm' : 'bg-slate-800/50'
+        } ${iconColor}`}>
+          {config?.icon ?? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -314,10 +289,36 @@ export function ActivityItem({ activity, onArchive, showArchiveButton = true, cu
               strokeLinejoin="round"
               className="h-3.5 w-3.5"
             >
-              <rect width="20" height="5" x="2" y="3" rx="1" />
-              <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
-              <path d="M10 12h4" />
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
             </svg>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+            {label && (
+              <>
+                <span className={`font-medium ${hg ? 'text-gray-700' : 'text-slate-300'}`}>{label}</span>
+                <span>·</span>
+              </>
+            )}
+            <span>{timeAgo}</span>
+          </div>
+          <div className="text-sm">{renderContent()}</div>
+        </div>
+        {/* Archive button - shown on hover */}
+        {showArchiveButton && onArchive && (
+          <button
+            onClick={handleArchive}
+            className={`absolute right-2 top-2 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${
+              hg
+                ? 'bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 shadow-sm'
+                : 'bg-slate-900 hover:bg-slate-700 text-slate-500 hover:text-slate-300 shadow-sm'
+            }`}
+            title="Archive"
+          >
+            <Archive className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
