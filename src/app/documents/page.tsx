@@ -3,6 +3,7 @@
 import type { DragEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -648,11 +649,11 @@ export default function DocumentsPage() {
                         />
                         
                         {/* File Icon */}
-                        <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${
+                        <div className={`relative flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden ${
                           hg ? 'bg-gray-100' : 'bg-slate-800'
                         }`}>
                           {doc.previewUrl ? (
-                            <img src={doc.previewUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                            <Image src={doc.previewUrl} alt="" fill unoptimized className="object-cover" />
                           ) : (
                             <FileIcon type={doc.type} className={`h-6 w-6 ${hg ? 'text-gray-500' : 'text-slate-400'}`} />
                           )}
