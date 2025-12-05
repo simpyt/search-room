@@ -6,7 +6,7 @@
  *   NEXT_PUBLIC_THEME=homegate (Homegate style)
  */
 
-export const THEMES = ['default', 'homegate'] as const;
+export const THEMES = ['homegate', 'default'] as const;
 export type Theme = (typeof THEMES)[number];
 
 export function getTheme(): Theme {
@@ -14,10 +14,12 @@ export function getTheme(): Theme {
   if (envTheme && THEMES.includes(envTheme as Theme)) {
     return envTheme as Theme;
   }
-  return 'default';
+  return 'homegate';
 }
 
 export function isHomegateTheme(): boolean {
   return getTheme() === 'homegate';
 }
+
+
 
