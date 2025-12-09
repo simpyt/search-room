@@ -28,6 +28,7 @@ export default function FavoritesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [addUrlModalOpen, setAddUrlModalOpen] = useState(false);
   const [searchExplainerOpen, setSearchExplainerOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   const roomId = room?.roomId;
   const hg = isHomegateTheme();
@@ -107,7 +108,7 @@ export default function FavoritesPage() {
               Favorites
             </h1>
             <p className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
-              {favorites.length} {favorites.length === 1 ? 'property' : 'properties'} saved
+              {favorites.filter(f => f.status !== 'DELETED').length} {favorites.filter(f => f.status !== 'DELETED').length === 1 ? 'property' : 'properties'} saved
             </p>
           </div>
         </div>
@@ -198,100 +199,40 @@ export default function FavoritesPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* View Toggle */}
-          <div className={`flex items-center rounded-lg p-1 ${hg ? 'bg-gray-100' : 'bg-slate-800/50'}`}>
+          {/* View Toggle Group */}
+          <div className={`inline-flex rounded-lg p-0.5 ${hg ? 'bg-gray-100' : 'bg-slate-800/80'}`}>
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ${
-                viewMode === 'list'
-                  ? hg
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'bg-slate-700 text-white'
-                  : hg
-                    ? 'text-gray-500 hover:text-gray-700'
-                    : 'text-slate-400 hover:text-white'
-              }`}
+              className={`h-8 w-8 rounded-md ${viewMode === 'list' ? (hg ? 'bg-white text-gray-900 shadow-sm' : 'bg-slate-600 text-white') : (hg ? 'text-gray-500 hover:text-gray-700 hover:bg-transparent' : 'text-slate-400 hover:text-white hover:bg-transparent')}`}
               onClick={() => handleViewChange('list')}
               title="List view"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <line x1="8" x2="21" y1="6" y2="6" />
-                <line x1="8" x2="21" y1="12" y2="12" />
-                <line x1="8" x2="21" y1="18" y2="18" />
-                <line x1="3" x2="3.01" y1="6" y2="6" />
-                <line x1="3" x2="3.01" y1="12" y2="12" />
-                <line x1="3" x2="3.01" y1="18" y2="18" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" />
+                <line x1="3" x2="3.01" y1="6" y2="6" /><line x1="3" x2="3.01" y1="12" y2="12" /><line x1="3" x2="3.01" y1="18" y2="18" />
               </svg>
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ${
-                viewMode === 'grid'
-                  ? hg
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'bg-slate-700 text-white'
-                  : hg
-                    ? 'text-gray-500 hover:text-gray-700'
-                    : 'text-slate-400 hover:text-white'
-              }`}
+              className={`h-8 w-8 rounded-md ${viewMode === 'grid' ? (hg ? 'bg-white text-gray-900 shadow-sm' : 'bg-slate-600 text-white') : (hg ? 'text-gray-500 hover:text-gray-700 hover:bg-transparent' : 'text-slate-400 hover:text-white hover:bg-transparent')}`}
               onClick={() => handleViewChange('grid')}
               title="Grid view"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <rect x="3" y="3" width="7" height="7" />
-                <rect x="14" y="3" width="7" height="7" />
-                <rect x="14" y="14" width="7" height="7" />
-                <rect x="3" y="14" width="7" height="7" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
               </svg>
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ${
-                viewMode === 'kanban'
-                  ? hg
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'bg-slate-700 text-white'
-                  : hg
-                    ? 'text-gray-500 hover:text-gray-700'
-                    : 'text-slate-400 hover:text-white'
-              }`}
+              className={`h-8 w-8 rounded-md ${viewMode === 'kanban' ? (hg ? 'bg-white text-gray-900 shadow-sm' : 'bg-slate-600 text-white') : (hg ? 'text-gray-500 hover:text-gray-700 hover:bg-transparent' : 'text-slate-400 hover:text-white hover:bg-transparent')}`}
               onClick={() => handleViewChange('kanban')}
               title="Kanban view"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <rect x="3" y="3" width="5" height="18" rx="1" />
-                <rect x="10" y="3" width="5" height="12" rx="1" />
-                <rect x="17" y="3" width="5" height="8" rx="1" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <rect x="3" y="3" width="5" height="18" rx="1" /><rect x="10" y="3" width="5" height="12" rx="1" /><rect x="17" y="3" width="5" height="8" rx="1" />
               </svg>
             </Button>
           </div>
@@ -304,27 +245,56 @@ export default function FavoritesPage() {
           <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${hg ? 'border-[#e5007d]' : 'border-sky-500'}`} />
         </div>
       ) : (
-        <div className={`rounded-xl p-4 ${hg ? 'bg-white border border-gray-200' : 'bg-slate-900/50 border border-slate-700/50'}`}>
+        <div className={`rounded-xl p-4 space-y-4 ${hg ? 'bg-white border border-gray-200' : 'bg-slate-900/50 border border-slate-700/50'}`}>
           {viewMode === 'list' && (
             <FavoritesTable
-              favorites={favorites}
+              favorites={favorites.filter(f => f.status !== 'DELETED')}
               onStatusChange={handleStatusChange}
               roomId={roomId!}
             />
           )}
           {viewMode === 'grid' && (
             <FavoritesGrid
-              favorites={favorites}
+              favorites={favorites.filter(f => f.status !== 'DELETED')}
               onStatusChange={handleStatusChange}
               roomId={roomId!}
             />
           )}
           {viewMode === 'kanban' && (
             <FavoritesKanban
-              favorites={favorites}
+              favorites={favorites.filter(f => f.status !== 'DELETED')}
               onStatusChange={handleStatusChange}
               roomId={roomId!}
             />
+          )}
+
+          {/* Archived Section */}
+          {favorites.filter(f => f.status === 'DELETED').length > 0 && (
+            <div className={`border-t pt-4 ${hg ? 'border-gray-200' : 'border-slate-700/50'}`}>
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className={`flex items-center gap-2 text-sm ${hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-slate-200'} transition-colors`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 transition-transform ${showArchived ? 'rotate-90' : ''}`}>
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <rect width="20" height="5" x="2" y="3" rx="1" />
+                  <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+                  <path d="M10 12h4" />
+                </svg>
+                Archived ({favorites.filter(f => f.status === 'DELETED').length})
+              </button>
+              {showArchived && (
+                <div className="mt-3">
+                  <FavoritesTable
+                    favorites={favorites.filter(f => f.status === 'DELETED')}
+                    onStatusChange={handleStatusChange}
+                    roomId={roomId!}
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -347,4 +317,6 @@ export default function FavoritesPage() {
     </div>
   );
 }
+
+
 
