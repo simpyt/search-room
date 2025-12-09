@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRoom } from '@/app/rooms/[roomId]/RoomContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -279,12 +280,28 @@ export function MyView() {
       <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className={hg ? 'text-gray-900' : 'text-white'}>My Favorites</CardTitle>
+            <Link href={`/rooms/${roomId}/favorites`} className="group">
+              <CardTitle className={`${hg ? 'text-gray-900 group-hover:text-[#e5007d]' : 'text-white group-hover:text-sky-400'} transition-colors`}>
+                My Favorites
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="inline-block h-4 w-4 ml-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" x2="21" y1="14" y2="3" />
+                </svg>
+              </CardTitle>
               <CardDescription>
                 {myFavorites.length} {myFavorites.length === 1 ? 'property' : 'properties'} you added
               </CardDescription>
-            </div>
+            </Link>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
