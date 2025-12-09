@@ -52,7 +52,7 @@ export default function FavoritesPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/rooms/${roomId}/listings`);
+      const res = await fetch(`/api/rooms/${roomId}/listings?includeDeleted=true`);
       if (res.ok) {
         const data = await res.json();
         setFavorites(data.listings || []);

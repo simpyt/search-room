@@ -77,7 +77,7 @@ export function TogetherView() {
       const [criteriaRes, compatRes, listingsRes] = await Promise.all([
         fetch(`/api/rooms/${roomId}/criteria`),
         fetch(`/api/rooms/${roomId}/compatibility`),
-        fetch(`/api/rooms/${roomId}/listings`),
+        fetch(`/api/rooms/${roomId}/listings?includeDeleted=true`),
       ]);
 
       if (criteriaRes.ok) {

@@ -5,6 +5,7 @@ import {
   createListing,
   getRoomListings,
   findListingByExternalId,
+  updateListingStatus,
 } from '@/lib/db/listings';
 import { logListingPinned } from '@/lib/db/activities';
 
@@ -85,6 +86,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (externalId) {
       const existing = await findListingByExternalId(roomId, externalId);
       if (existing) {
+        // If it was deleted, restore it
+        if (existing.status === 'DELETED') {
+          const restored = await updateListingStatus(roomId, existing.listingId, 'UNSEEN');
+          await logListingPinned(roomId, user.id, existing.listingId, existing.title + ' (restored)');
+          return NextResponse.json(
+            { listingId: existing.listingId, listing: restored, restored: true },
+            { status: 200 }
+          );
+        }
+        // Otherwise it's a duplicate
         return NextResponse.json(
           { error: 'Listing already exists', existingId: existing.listingId },
           { status: 409 }
