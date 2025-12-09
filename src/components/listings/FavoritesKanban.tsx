@@ -381,3 +381,4 @@ function KanbanCard({ listing, roomId, isUpdating }: KanbanCardProps) {
     </Link>
   );
 }
+
