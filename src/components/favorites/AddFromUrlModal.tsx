@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
@@ -199,13 +200,39 @@ export function AddFromUrlModal({
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <div>
+              <div className="flex-1">
                 <p className={`text-sm font-medium ${hg ? 'text-red-800' : 'text-red-300'}`}>
                   Could not fetch listing
                 </p>
                 <p className={`text-sm mt-1 ${hg ? 'text-red-600' : 'text-red-400'}`}>
                   {error}
                 </p>
+                {error.includes('browser extension') && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className={`mt-3 ${hg ? 'border-red-300 text-red-700 hover:bg-red-100' : 'border-red-500/50 text-red-300 hover:bg-red-500/20'}`}
+                  >
+                    <Link href="/extension">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4 mr-2"
+                      >
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" x2="21" y1="14" y2="3" />
+                      </svg>
+                      Get Browser Extension
+                    </Link>
+                  </Button>
+                )}
               </div>
             </div>
           )}
