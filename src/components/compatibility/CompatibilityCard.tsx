@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { CompatibilitySnapshot } from '@/lib/types';
 import { COMPATIBILITY_LEVEL_COLORS, COMPATIBILITY_LEVEL_BG } from '@/lib/types';
-import { isHomegateTheme } from '@/lib/theme';
+import { btnPrimary } from '@/lib/styles';
 
 interface CompatibilityCardProps {
   compatibility: CompatibilitySnapshot | null;
@@ -19,7 +19,6 @@ interface CompatibilityCardProps {
 export function CompatibilityCard({ compatibility, onRecalculate, personalizedFor, partnerName, collapsible = false, defaultExpanded = false }: CompatibilityCardProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const hg = isHomegateTheme();
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -32,12 +31,10 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
 
   if (!compatibility) {
     return (
-      <Card className={hg ? 'border-gray-200 bg-white' : 'border-slate-700/50 bg-slate-900/50'}>
+      <Card className="border-border-subtle bg-surface">
         <CardContent className="py-8">
           <div className="text-center">
-            <div
-              className={`mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center ${hg ? 'bg-gray-100' : 'bg-slate-800'}`}
-            >
+            <div className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center bg-muted">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -46,16 +43,16 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className={`h-8 w-8 ${hg ? 'text-gray-400' : 'text-slate-500'}`}
+                className="h-8 w-8 text-text-muted"
               >
                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
               </svg>
             </div>
-            <p className={`mb-4 ${hg ? 'text-gray-500' : 'text-slate-400'}`}>Compatibility has not been calculated yet</p>
+            <p className="mb-4 text-text-muted">Compatibility has not been calculated yet</p>
             <Button
               onClick={handleRefresh}
               disabled={refreshing}
-              className={hg ? 'bg-[#e5007d] hover:bg-[#ae0061] text-white' : 'bg-sky-600 hover:bg-sky-700'}
+              className={btnPrimary}
             >
               {refreshing ? (
                 <>
@@ -79,17 +76,17 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
   const levelBg = COMPATIBILITY_LEVEL_BG[compatibility.level];
   const percentage = compatibility.scorePercent;
 
-  // Determine colors based on level
+  // Determine colors based on level - semantic colors that work across themes
   const getGradientColors = () => {
     switch (compatibility.level) {
       case 'HIGH':
-        return { stroke: '#22c55e', bg: hg ? 'from-green-50 to-emerald-50' : 'from-green-500/10 to-emerald-500/10' };
+        return { stroke: '#22c55e', bg: 'from-green-50 to-emerald-50 dark:from-green-500/10 dark:to-emerald-500/10' };
       case 'MEDIUM':
-        return { stroke: '#eab308', bg: hg ? 'from-yellow-50 to-amber-50' : 'from-yellow-500/10 to-amber-500/10' };
+        return { stroke: '#eab308', bg: 'from-yellow-50 to-amber-50 dark:from-yellow-500/10 dark:to-amber-500/10' };
       case 'LOW':
-        return { stroke: '#ef4444', bg: hg ? 'from-red-50 to-orange-50' : 'from-red-500/10 to-orange-500/10' };
+        return { stroke: '#ef4444', bg: 'from-red-50 to-orange-50 dark:from-red-500/10 dark:to-orange-500/10' };
       default:
-        return { stroke: '#6b7280', bg: hg ? 'from-gray-50 to-slate-50' : 'from-gray-500/10 to-slate-500/10' };
+        return { stroke: '#6b7280', bg: 'from-gray-50 to-slate-50 dark:from-gray-500/10 dark:to-slate-500/10' };
     }
   };
 
@@ -106,10 +103,10 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
             onClick={collapsible ? () => setExpanded(!expanded) : undefined}
           >
             <div className="space-y-1.5">
-              <h3 className={`text-lg font-semibold ${hg ? 'text-gray-900' : 'text-white'}`}>
+              <h3 className="text-lg font-semibold text-text-primary">
                 {personalizedFor ? `Your Compatibility${partnerName ? ` with ${partnerName}` : ''}` : 'Compatibility'}
               </h3>
-              <p className={`text-sm ${hg ? 'text-gray-500' : 'text-slate-400'}`}>
+              <p className="text-sm text-text-muted">
                 {isExpanded
                   ? 'How well your preferences align'
                   : `${percentage}% ${compatibility.level} • ${compatibility.comment?.slice(0, 60)}${(compatibility.comment?.length || 0) > 60 ? '...' : ''}`
@@ -126,7 +123,7 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
                     handleRefresh();
                   }}
                   disabled={refreshing}
-                  className={`gap-1.5 ${hg ? 'text-gray-500 hover:text-gray-900 hover:bg-white/50' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+                  className="gap-1.5 text-text-muted hover:text-text-primary hover:bg-surface-hover"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -150,7 +147,7 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`flex-shrink-0 ${hg ? 'text-gray-500 hover:text-gray-700' : 'text-slate-400 hover:text-white'}`}
+                  className="flex-shrink-0 text-text-muted hover:text-text-primary"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpanded(!expanded);
@@ -186,7 +183,7 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
                       cy="60"
                       r="52"
                       fill="none"
-                      stroke={hg ? '#e5e7eb' : '#334155'}
+                      className="stroke-border"
                       strokeWidth="12"
                       strokeLinecap="round"
                     />
@@ -239,23 +236,23 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
                   </div>
 
                   {/* Comment */}
-                  <p className={`text-sm leading-relaxed ${hg ? 'text-gray-600' : 'text-slate-300'}`}>
+                  <p className="text-sm leading-relaxed text-text-secondary">
                     {compatibility.comment}
                   </p>
 
                   {/* Progress indicators */}
                   <div className="flex items-center gap-4 pt-2">
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${percentage >= 70 ? 'bg-green-500' : hg ? 'bg-gray-300' : 'bg-slate-600'}`} />
-                      <span className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-500'}`}>70%+</span>
+                      <div className={`w-2 h-2 rounded-full ${percentage >= 70 ? 'bg-green-500' : 'bg-border'}`} />
+                      <span className="text-xs text-text-muted">70%+</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${percentage >= 40 && percentage < 70 ? 'bg-yellow-500' : hg ? 'bg-gray-300' : 'bg-slate-600'}`} />
-                      <span className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-500'}`}>40-69%</span>
+                      <div className={`w-2 h-2 rounded-full ${percentage >= 40 && percentage < 70 ? 'bg-yellow-500' : 'bg-border'}`} />
+                      <span className="text-xs text-text-muted">40-69%</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${percentage < 40 ? 'bg-red-500' : hg ? 'bg-gray-300' : 'bg-slate-600'}`} />
-                      <span className={`text-xs ${hg ? 'text-gray-500' : 'text-slate-500'}`}>&lt;40%</span>
+                      <div className={`w-2 h-2 rounded-full ${percentage < 40 ? 'bg-red-500' : 'bg-border'}`} />
+                      <span className="text-xs text-text-muted">&lt;40%</span>
                     </div>
                   </div>
                 </div>
@@ -263,11 +260,7 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
 
               {/* Low compatibility tip */}
               {compatibility.level === 'LOW' && (
-                <div
-                  className={`mt-6 p-4 rounded-lg border flex items-start gap-3 ${
-                    hg ? 'bg-white/60 border-amber-200' : 'bg-slate-900/40 border-amber-500/30'
-                  }`}
-                >
+                <div className="mt-6 p-4 rounded-lg border flex items-start gap-3 bg-surface/60 border-amber-500/30 dark:bg-slate-900/40">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -276,7 +269,7 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`h-5 w-5 flex-shrink-0 mt-0.5 ${hg ? 'text-amber-500' : 'text-amber-400'}`}
+                    className="h-5 w-5 flex-shrink-0 mt-0.5 text-amber-500"
                   >
                     <path d="M12 2v8" />
                     <path d="m4.93 10.93 1.41 1.41" />
@@ -287,8 +280,8 @@ export function CompatibilityCard({ compatibility, onRecalculate, personalizedFo
                     <path d="m8 22 4-10 4 10" />
                   </svg>
                   <div>
-                    <p className={`text-sm font-medium ${hg ? 'text-amber-700' : 'text-amber-400'}`}>Need help finding common ground?</p>
-                    <p className={`text-sm mt-1 ${hg ? 'text-amber-600' : 'text-amber-300/80'}`}>
+                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Need help finding common ground?</p>
+                    <p className="text-sm mt-1 text-amber-600/80 dark:text-amber-300/80">
                       Ask the AI Co-pilot to suggest a compromise by typing &quot;AI, suggest a compromise&quot; in the chat.
                     </p>
                   </div>

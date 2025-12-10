@@ -41,6 +41,18 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Extended theme colors for consolidated styling */
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-foreground: var(--primary-soft-foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-hover: var(--surface-hover);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
 }
 
 /* =============================================================================
@@ -88,8 +100,11 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #0ea5e9; /* sky-500 */
+  --primary-foreground: #ffffff;
+  --primary-hover: #0284c7; /* sky-600 */
+  --primary-soft: rgba(14, 165, 233, 0.2); /* sky-500/20 */
+  --primary-soft-foreground: #38bdf8; /* sky-400 */
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -113,6 +128,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Extended theme tokens */
+  --surface: rgba(15, 23, 42, 0.5); /* slate-900/50 */
+  --surface-elevated: rgba(30, 41, 59, 0.8); /* slate-800/80 */
+  --surface-hover: rgba(51, 65, 85, 0.5); /* slate-700/50 */
+  --border-subtle: rgba(51, 65, 85, 0.5); /* slate-700/50 */
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1; /* slate-300 */
+  --text-muted: #94a3b8; /* slate-400 */
 }
 
 /* =============================================================================
@@ -148,6 +172,9 @@
   /* Primary - Homegate Magenta */
   --primary: #e5007d;
   --primary-foreground: #ffffff;
+  --primary-hover: #ae0061;
+  --primary-soft: rgba(229, 0, 125, 0.1); /* #e5007d/10 */
+  --primary-soft-foreground: #e5007d;
 
   /* Secondary - Light gray */
   --secondary: #f5f5f5;
@@ -187,6 +214,15 @@
   --sidebar-accent-foreground: #8d004f;
   --sidebar-border: #e0e0e0;
   --sidebar-ring: #e5007d;
+
+  /* Extended theme tokens */
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-hover: #f9fafb; /* gray-50 */
+  --border-subtle: #e5e7eb; /* gray-200 */
+  --text-primary: #111827; /* gray-900 */
+  --text-secondary: #4b5563; /* gray-600 */
+  --text-muted: #6b7280; /* gray-500 */
 }
 
 /* Homegate-specific component overrides */
