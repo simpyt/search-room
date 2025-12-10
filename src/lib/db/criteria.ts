@@ -8,6 +8,13 @@ import type {
   CombineMode,
 } from '@/lib/types';
 
+// NOTE: TTL is not added to criteria items to preserve them indefinitely.
+// Old criteria versions could be cleaned up with a scheduled Lambda that:
+// 1. Queries all CRITERIA# items for each room
+// 2. Identifies non-latest versions for each user
+// 3. Sets TTL on those items for future cleanup
+// This avoids losing criteria for rooms that are inactive for extended periods.
+
 export async function saveUserCriteria(
   roomId: string,
   userId: string,
@@ -59,7 +66,7 @@ export async function getLatestUserCriteria(
 
   if (!result.Items || result.Items.length === 0) return null;
 
-  const { PK, SK, entityType, ...criteria } = result.Items[0];
+  const { PK, SK, entityType, ttl, ...criteria } = result.Items[0];
   return criteria as UserCriteria;
 }
 
@@ -89,7 +96,7 @@ export async function getAllUsersCriteria(
     // Skip combined criteria
     if (item.SK.startsWith('CRITERIA_COMBINED#')) continue;
 
-    const { PK, SK, entityType, ...criteria } = item;
+    const { PK, SK, entityType, ttl, ...criteria } = item;
     const userCrit = criteria as UserCriteria;
 
     if (!seen.has(userCrit.userId)) {
@@ -151,7 +158,7 @@ export async function getLatestCombinedCriteria(
 
   if (!result.Items || result.Items.length === 0) return null;
 
-  const { PK, SK, entityType, ...combined } = result.Items[0];
+  const { PK, SK, entityType, ttl, ...combined } = result.Items[0];
   return combined as CombinedCriteria;
 }
 

@@ -1,5 +1,5 @@
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { docClient, TABLE_NAME, keys, skPrefix } from './client';
+import { docClient, TABLE_NAME, keys, skPrefix, calculateTTL, TTL_DAYS } from './client';
 import type { Activity, ActivityType, SenderType } from '@/lib/types';
 import { v4 as uuid } from 'uuid';
 
@@ -27,9 +27,12 @@ export async function createActivity(
     new PutCommand({
       TableName: TABLE_NAME,
       Item: {
-        ...keys.activity(roomId, now),
+        // SK now includes activityId to prevent timestamp collision
+        ...keys.activity(roomId, now, activityId),
         ...activity,
         entityType: 'Activity',
+        // TTL: Activities expire after 90 days for automatic cleanup
+        ttl: calculateTTL(TTL_DAYS.activities),
       },
     })
   );
@@ -70,7 +73,7 @@ export async function getRoomActivities(
   const result = await docClient.send(new QueryCommand(params));
 
   return (result.Items || []).map((item) => {
-    const { PK, SK, entityType, ...activity } = item;
+    const { PK, SK, entityType, ttl, ...activity } = item;
     return activity as Activity;
   });
 }

@@ -88,9 +88,13 @@ All AI calls use `response_format: { type: 'json_object' }` for reliable structu
    ```
 
    This creates a table with:
-   - Partition Key: `PK` (String)
-   - Sort Key: `SK` (String)
+   - Primary Key: `PK` (partition) + `SK` (sort)
+   - GSI1 (ExternalIdIndex): For listing deduplication
+   - GSI2 (StatusIndex): For status-based queries
+   - TTL: Enabled for automatic activity cleanup
    - Billing Mode: Pay-per-request (on-demand)
+
+   See [DynamoDB Access Patterns](./docs/DYNAMODB_ACCESS_PATTERNS.md) for full schema details.
 
 6. Run the development server (with Turbopack):
 

@@ -17,6 +17,7 @@ import {
   DynamoDBClient,
   CreateTableCommand,
   DescribeTableCommand,
+  UpdateTimeToLiveCommand,
   ResourceNotFoundException,
 } from '@aws-sdk/client-dynamodb';
 
@@ -54,6 +55,34 @@ async function createTable(): Promise<void> {
     AttributeDefinitions: [
       { AttributeName: 'PK', AttributeType: 'S' },
       { AttributeName: 'SK', AttributeType: 'S' },
+      { AttributeName: 'GSI1PK', AttributeType: 'S' }, // ExternalIdIndex
+      { AttributeName: 'GSI1SK', AttributeType: 'S' },
+      { AttributeName: 'GSI2PK', AttributeType: 'S' }, // StatusIndex
+      { AttributeName: 'GSI2SK', AttributeType: 'S' },
+    ],
+    GlobalSecondaryIndexes: [
+      {
+        // GSI1: ExternalIdIndex - for finding listings by source + externalId
+        // GSI1PK: SOURCE#<sourceBrand>#<externalId>
+        // GSI1SK: ROOM#<roomId>
+        IndexName: 'ExternalIdIndex',
+        KeySchema: [
+          { AttributeName: 'GSI1PK', KeyType: 'HASH' },
+          { AttributeName: 'GSI1SK', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+      {
+        // GSI2: StatusIndex - for querying listings by status
+        // GSI2PK: ROOM#<roomId>
+        // GSI2SK: STATUS#<status>#<listingId>
+        IndexName: 'StatusIndex',
+        KeySchema: [
+          { AttributeName: 'GSI2PK', KeyType: 'HASH' },
+          { AttributeName: 'GSI2SK', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
     ],
     BillingMode: 'PAY_PER_REQUEST', // On-demand capacity
     Tags: [
@@ -70,6 +99,26 @@ async function createTable(): Promise<void> {
   } catch (error) {
     console.error('Failed to create table:', error);
     throw error;
+  }
+}
+
+async function enableTTL(): Promise<void> {
+  console.log('Enabling TTL on attribute "ttl"...');
+
+  try {
+    await client.send(
+      new UpdateTimeToLiveCommand({
+        TableName: TABLE_NAME,
+        TimeToLiveSpecification: {
+          AttributeName: 'ttl',
+          Enabled: true,
+        },
+      })
+    );
+    console.log('TTL enabled successfully!');
+  } catch (error) {
+    // TTL might already be enabled
+    console.log('TTL configuration:', error instanceof Error ? error.message : error);
   }
 }
 
@@ -134,10 +183,16 @@ async function main(): Promise<void> {
   } else {
     await createTable();
     await waitForTableActive();
+    await enableTTL();
   }
 
   console.log();
   console.log('Done! Your DynamoDB table is ready.');
+  console.log();
+  console.log('Table features:');
+  console.log('  - GSI1 (ExternalIdIndex): For listing deduplication by source+externalId');
+  console.log('  - GSI2 (StatusIndex): For querying listings by status');
+  console.log('  - TTL: Enabled on "ttl" attribute for automatic cleanup');
   console.log();
   console.log('Add these to your .env.local:');
   console.log(`  DYNAMODB_TABLE_NAME=${TABLE_NAME}`);

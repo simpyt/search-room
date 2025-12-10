@@ -96,7 +96,7 @@ export async function getRoom(roomId: string): Promise<Room | null> {
 
   if (!result.Item) return null;
 
-  const { PK, SK, entityType, ...room } = result.Item;
+  const { PK, SK, entityType, ttl, ...room } = result.Item;
   return room as Room;
 }
 
@@ -121,7 +121,7 @@ export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
   );
 
   return (result.Items || []).map((item) => {
-    const { PK, SK, entityType, ...member } = item;
+    const { PK, SK, entityType, ttl, ...member } = item;
     return member as RoomMember;
   });
 }
@@ -253,8 +253,8 @@ export async function updateRoomContext(
 }
 
 export async function deleteRoom(roomId: string): Promise<void> {
-  // First get all items for this room
-  const items = await docClient.send(
+  // First get all items for this room (includes ROOM, MEMBER#, CRITERIA#, LISTING#, etc.)
+  const roomItems = await docClient.send(
     new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: 'PK = :pk',
@@ -264,21 +264,34 @@ export async function deleteRoom(roomId: string): Promise<void> {
     })
   );
 
-  if (!items.Items || items.Items.length === 0) return;
+  if (!roomItems.Items || roomItems.Items.length === 0) return;
 
-  // Delete all items (max 25 per batch in DynamoDB)
+  // Extract member userIds to also delete their UserRoom items
+  const memberItems = roomItems.Items.filter((item) => item.SK.startsWith(skPrefix.members));
+  const userRoomKeys = memberItems.map((item) => ({
+    PK: `USER#${item.userId}`,
+    SK: `ROOM#${roomId}`,
+  }));
+
+  // Combine all items to delete: room items + userRoom items
+  const allKeysToDelete = [
+    ...roomItems.Items.map((item) => ({ PK: item.PK, SK: item.SK })),
+    ...userRoomKeys,
+  ];
+
+  // Delete all items (max 25 per batch in DynamoDB TransactWrite)
   const batches = [];
-  for (let i = 0; i < items.Items.length; i += 25) {
-    batches.push(items.Items.slice(i, i + 25));
+  for (let i = 0; i < allKeysToDelete.length; i += 25) {
+    batches.push(allKeysToDelete.slice(i, i + 25));
   }
 
   for (const batch of batches) {
     await docClient.send(
       new TransactWriteCommand({
-        TransactItems: batch.map((item) => ({
+        TransactItems: batch.map((key) => ({
           Delete: {
             TableName: TABLE_NAME,
-            Key: { PK: item.PK, SK: item.SK },
+            Key: key,
           },
         })),
       })

@@ -73,7 +73,10 @@ The Amplify service role needs DynamoDB permissions. Add this policy to the Ampl
         "dynamodb:Query",
         "dynamodb:Scan"
       ],
-      "Resource": "arn:aws:dynamodb:eu-central-1:*:table/search-room*"
+      "Resource": [
+        "arn:aws:dynamodb:eu-central-1:*:table/search-room",
+        "arn:aws:dynamodb:eu-central-1:*:table/search-room/index/*"
+      ]
     }
   ]
 }
@@ -165,3 +168,7 @@ Next.js image optimization works automatically in Amplify. No additional config 
 ### Environment Variable Issues
 
 Remember: `AWS_*` prefixed variables are **reserved** in Amplify and will be ignored. Use `DYNAMODB_*` prefix instead for explicit credentials (though IAM roles are preferred).
+
+## Related Documentation
+
+- [DynamoDB Access Patterns](./DYNAMODB_ACCESS_PATTERNS.md) - Table design, key structure, GSIs, and all access patterns

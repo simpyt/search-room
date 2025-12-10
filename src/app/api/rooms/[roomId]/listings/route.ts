@@ -84,7 +84,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Check if already pinned (by external ID)
     if (externalId) {
-      const existing = await findListingByExternalId(roomId, externalId);
+      const existing = await findListingByExternalId(roomId, sourceBrand, externalId);
       if (existing) {
         // If it was deleted, restore it
         if (existing.status === 'DELETED') {

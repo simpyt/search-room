@@ -53,7 +53,7 @@ export async function getLatestCompatibility(
 
   if (!result.Items || result.Items.length === 0) return null;
 
-  const { PK, SK, entityType, ...snapshot } = result.Items[0];
+  const { PK, SK, entityType, ttl, ...snapshot } = result.Items[0];
   return snapshot as CompatibilitySnapshot;
 }
 
@@ -75,7 +75,7 @@ export async function getCompatibilityHistory(
   );
 
   return (result.Items || []).map((item) => {
-    const { PK, SK, entityType, ...snapshot } = item;
+    const { PK, SK, entityType, ttl, ...snapshot } = item;
     return snapshot as CompatibilitySnapshot;
   });
 }
